@@ -1,0 +1,18 @@
+Búsquedas web sobre Mirai y sus variantes para la charla «De Mirai a Skynet», 25-nov-2026 (modo standard, solo lectura).
+
+Consulta 1: "Cloudflare 31.4 Tbps DDoS Aisuru botnet February 2026"
+- Cloudflare, informe DDoS del cuarto trimestre de 2025, publicado el 5-feb-2026: https://blog.cloudflare.com/ddos-threat-report-2025-q4/
+- Según el informe: ataque de 31,4 Tbps y 200 millones de peticiones por segundo; campaña que empezó el 19-dic-2025; botnet Aisuru-Kimwolf.
+- Otras fuentes del resumen de búsqueda: https://thehackernews.com/2026/02/aisurukimwolf-botnet-launches-record.html (sitúa el ataque en noviembre de 2025; discrepancia de fechas entre fuentes, se usa la de Cloudflare).
+- https://www.bleepingcomputer.com/news/security/aisuru-botnet-sets-new-record-with-314-tbps-ddos-attack/ (secundaria)
+- No se confirmó en estas búsquedas que Aisuru esté basada en Mirai: solo lo afirman algunos reportes. Se trata como [S].
+
+Consulta 2: "Mirai botnet Krebs on Security OVH Dyn attack 2016 source code release variants Okiru Miori Hakai V3G4"
+- Mirai junto con BASHLITE en el DDoS del 20-sep-2016 contra Krebs on Security; después vinculado al ataque contra Dyn de octubre de 2016. Las cifras de pico difieren entre fuentes (620 y 665 Gbit/s en Krebs; cerca de 1 Tbps y 799 Gbps en OVH). Fuente de la referencia: https://en.wikipedia.org/wiki/Mirai_botnet (sin fuente primaria comprobada).
+- Publicación del código en Hack Forums, en 2016 (una fuente dice «antes del fin de septiembre»; CIS da 2017, que parece un error).
+- Okiru: 14-ene-2018, procesadores ARC. Miori: finales de 2018, ThinkPHP. Hakai: enero de 2019, ThinkPHP.
+- V3G4: no aparece en estos resultados. No se usa.
+- Paper académico: https://faculty.cc.gatech.edu/~mbailey/publications/usesec17_mirai.pdf (USENIX Security 2017, ya en evidencia/fuente-usenix-mirai-2026-11-25.html).
+- Advertencia de la propia búsqueda: Wikipedia marca partes de la sección de variantes como sin citar.
+
+Nota: no se abrieron las fuentes primarias de Krebs, Dyn ni del informe de Cloudflare. Quedan pendientes antes de citar cifras.

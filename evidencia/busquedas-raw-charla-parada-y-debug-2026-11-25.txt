@@ -1,0 +1,22 @@
+Búsquedas web de la charla «De Mirai a Skynet», 25-nov-2026 (modo standard, solo lectura).
+Motivo: buscar fuentes para D7.5 (parada física independiente) y D4.2 (puertos de depuración), según pedido de Joseph.
+
+Consulta 1: "ISO 13850 emergency stop function requirements machinery independent of control system"
+Resultados relevantes:
+- ISO 13850:2015, requisitos funcionales y principios de diseño de la función de parada de emergencia, independientes del tipo de energía. https://www.iso.org/standard/39078.html
+- IEC 60204-1 para la realización eléctrica/electrónica de la función de parada. (citado en el resumen de la búsqueda)
+- Nota: la búsqueda no confirma el requisito de independencia respecto del sistema de control o de la red. No se leyó el texto de la norma.
+
+Consulta 2: "CISA secure by design guidance disable debug ports JTAG UART embedded devices hardening"
+Resultados relevantes:
+- MITRE EMB3D, MID-057: desactivar o retirar puertos físicos de desarrollo y depuración en equipos de producción. https://emb3d.mitre.org/mitigations/MID-057.html
+- OWASP IoT Security Verification Standard, V5 (5.1.1): proteger o desactivar el acceso a interfaces de depuración (JTAG, SWD, UART). https://owasp.org/IoT-Security-Verification-Standard-ISVS/en/V5-Hardware_Platform_Requirements
+- Nota: no se encontró en CISA ningún documento que nombre JTAG, UART ni puertos de depuración. Las fuentes encontradas son secundarias.
+
+Verificación del BOE (misma sesión):
+- https://www.boe.es/doue/2024/2847/L00001-00081.pdf descargado en evidencia/fuente-boe-doue-reglamento-2024-2847-2026-11-25.pdf
+- sha256 idéntico al de fuentes/L00001-00081.pdf: e219b1cf88fd5f01cecfecbc1ac9153c24fdfb7ae6f0e3b724440bf252db8261
+
+Verificación del dossier de Symantec (misma sesión):
+- fuentes/w32_stuxnet_dossier.pdf, sha256 9149e107cd45d248325642116846f51234f5988845e86226ad97df1c7b63ecd7, versión 1.4, febrero de 2011.
+- Leído en texto: resumen ejecutivo, escenario de ataque (declarado como especulación), sección de propagación por medios extraíbles con el vínculo a CVE-2010-2568, y advertencias de Symantec sobre conclusiones de atribución.
