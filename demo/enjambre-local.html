@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Enjambre con mando central y con mando local</title>
+<style>
+  body { margin: 0; background: #04110D; color: #C8F5E1; font-family: DejaVu Sans, Arial, sans-serif; }
+  header { padding: 10px 16px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  button { background: #0B2A22; color: #C8F5E1; border: 1px solid #1F7A62; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+  button.activo { background: #1F7A62; }
+  button.parada { border-color: #E63946; color: #FFB703; }
+  button.parada.activo { background: #E63946; color: #04110D; }
+  #estado { margin-left: auto; font-family: DejaVu Sans Mono, monospace; font-size: 14px; }
+  canvas { display: block; background: #071A14; cursor: crosshair; }
+  footer { padding: 8px 16px; font-size: 12px; color: #8A93A3; }
+</style>
+</head>
+<body>
+<header>
+  <button id="b-central" class="activo">Mando central</button>
+  <button id="b-local">Pérdida de mando (solo reglas locales)</button>
+  <button id="b-parada" class="parada">Parada de emergencia</button>
+  <button id="b-reiniciar">Reiniciar</button>
+  <div id="estado"></div>
+</header>
+<canvas id="c" width="900" height="520"></canvas>
+<footer>
+  Simulación local. No se conecta a nada y no contiene ningún mecanismo de ataque.
+  En el modo central, haz clic en el mapa para indicar el punto de destino del operador.
+  La parada de emergencia es una propuesta de diseño, no una norma.
+</footer>
+<script>
+const N = 40, W = 900, H = 520;
+const cv = document.getElementById("c"), ctx = cv.getContext("2d");
+let drones = [], modo = "central", destino = null, parada = false;
+
+function iniciar() {
+  drones = [];
+  for (let i = 0; i < N; i++) {
+    drones.push({ x: Math.random() * W, y: Math.random() * H,
+                  vx: (Math.random() - 0.5) * 2, vy: (Math.random() - 0.5) * 2 });
+  }
+}
+
+function paso() {
+  for (const d of drones) {
+    let ax = 0, ay = 0, n = 0, cx = 0, cy = 0, avx = 0, avy = 0, sx = 0, sy = 0;
+    for (const o of drones) {
+      if (o === d) continue;
+      const dx = o.x - d.x, dy = o.y - d.y, d2 = dx * dx + dy * dy;
+      if (d2 < 80 * 80) { n++; cx += o.x; cy += o.y; avx += o.vx; avy += o.vy; }
+      if (d2 < 22 * 22 && d2 > 0) { sx -= dx; sy -= dy; }
+    }
+    if (n > 0) {
+      ax += (cx / n - d.x) * 0.002 + (avx / n - d.vx) * 0.05;
+      ay += (cy / n - d.y) * 0.002 + (avy / n - d.vy) * 0.05;
+    }
+    ax += sx * 0.05; ay += sy * 0.05;
+    if (modo === "central" && destino) {
+      ax += (destino.x - d.x) * 0.0008; ay += (destino.y - d.y) * 0.0008;
+    }
+    if (d.x < 40) ax += 0.3; if (d.x > W - 40) ax -= 0.3;
+    if (d.y < 40) ay += 0.3; if (d.y > H - 40) ay -= 0.3;
+    d.vx += ax; d.vy += ay;
+    const v = Math.hypot(d.vx, d.vy);
+    if (parada) { d.vx *= 0.85; d.vy *= 0.85; }
+    else if (v > 3) { d.vx *= 3 / v; d.vy *= 3 / v; }
+    else if (v < 1) { const k = 1 / Math.max(v, 1e-6); d.vx *= k; d.vy *= k; }
+    d.x += d.vx; d.y += d.vy;
+  }
+}
+
+function coordinacion() {
+  let sx = 0, sy = 0;
+  for (const d of drones) {
+    const v = Math.hypot(d.vx, d.vy) || 1;
+    sx += d.vx / v; sy += d.vy / v;
+  }
+  return Math.hypot(sx, sy) / N;
+}
+
+function dibujar() {
+  ctx.clearRect(0, 0, W, H);
+  if (destino && modo === "central") {
+    ctx.strokeStyle = "#FFB703"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(destino.x, destino.y, 10, 0, Math.PI * 2); ctx.stroke();
+  }
+  const color = parada ? "#8A93A3" : (modo === "central" ? "#3DDC97" : "#C8F5E1");
+  for (const d of drones) {
+    const ang = Math.atan2(d.vy, d.vx);
+    ctx.save(); ctx.translate(d.x, d.y); ctx.rotate(ang);
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(-6, 4); ctx.lineTo(-6, -4); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+  ctx.fillStyle = "#C8F5E1"; ctx.font = "14px DejaVu Sans Mono, monospace";
+  const etiqueta = modo === "central" ? "Modo: mando central" : "Modo: sin mando, solo reglas locales";
+  ctx.fillText(etiqueta, 12, 22);
+  if (parada) { ctx.fillStyle = "#E63946"; ctx.fillText("PARADA DE EMERGENCIA ACTIVA", 12, 42); }
+  document.getElementById("estado").textContent =
+    "Coordinación: " + Math.round(coordinacion() * 100) + " %";
+}
+
+function bucle() { paso(); dibujar(); requestAnimationFrame(bucle); }
+
+function marcar(id, activo) {
+  for (const b of ["b-central", "b-local"]) document.getElementById(b).classList.toggle("activo", b === id && activo);
+}
+document.getElementById("b-central").onclick = () => { modo = "central"; marcar("b-central", true); };
+document.getElementById("b-local").onclick = () => { modo = "local"; destino = null; marcar("b-local", true); };
+document.getElementById("b-parada").onclick = (e) => { parada = !parada; e.target.classList.toggle("activo", parada); };
+document.getElementById("b-reiniciar").onclick = () => { parada = false; document.getElementById("b-parada").classList.remove("activo"); iniciar(); };
+cv.addEventListener("click", (e) => {
+  if (modo !== "central") return;
+  const r = cv.getBoundingClientRect();
+  destino = { x: (e.clientX - r.left) * (W / r.width), y: (e.clientY - r.top) * (H / r.height) };
+});
+
+iniciar();
+bucle();
+</script>
+</body>
+</html>
