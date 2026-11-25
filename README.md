@@ -1,11 +1,37 @@
+<div align="center">
+
+<img src="assets/banner-mirai-skynet.svg" alt="De Mirai a Skynet" width="100%">
+
 # De Mirai a Skynet
 
-Materiales de la charla: esquema, borrador de diapositivas y copias de las fuentes citadas.
+**Lo que ya es real, lo que no, y qué hacer antes de que sea tarde.**
 
-- `informes/`: esquema (`charla-de-mirai-a-skynet-esquema-2026-11-25.md`) y borrador por bloque (`charla-diapositivas-borrador-2026-11-25.md`).
-- `evidencia/`: copias de las fuentes citadas. Las copias con sufijo `-limpia` son las que se citan.
-- Las fuentes que no están aquí (dossier de Symantec y Reglamento) están en el repositorio de auditoría, en `fuentes/`.
+Charla técnica de Joseph Páez (software y seguridad) y José Laica (electrónica y robótica).
 
-Estado de cada fuente: [P] primaria verificada en el texto; [S] secundaria o de terceros, con su origen indicado; [X] sin fuente o no se usa.
+</div>
 
-Regla de la charla: la regla de menciones de IA no se aplica a esta charla. Si una fuente menciona la IA, la mención puede aparecer, solo en esta charla. Las empresas se nombran como lo que son, y se indica quién hace cada afirmación.
+---
+
+## Contenido
+
+- `informes/charla-de-mirai-a-skynet-esquema-2026-11-25.md`: esquema, bloques, tabla de fuentes y pendientes.
+- `informes/charla-diapositivas-borrador-2026-11-25.md`: borrador por bloque. Cada diapositiva indica su fuente y su estado.
+- `evidencia/`: copias de las fuentes citadas. Las copias `-limpia` son las que se citan.
+- `assets/banner-mirai-skynet.svg`: portada animada.
+
+## Estado de las fuentes
+
+| Símbolo | Significado |
+|---|---|
+| [P] | Fuente primaria, verificada en el texto |
+| [S] | Fuente secundaria o de terceros, con su origen indicado |
+| [X] | Sin fuente, o no se usa en la presentación |
+
+Las fuentes primarias que no están en este repositorio (dossier de Symantec y Reglamento (UE) 2024/2847) están en el repositorio de auditoría, en `fuentes/`.
+
+## Reglas de la charla
+
+- La regla de menciones de IA no se aplica a esta charla. Si una fuente menciona la IA, la mención puede aparecer, solo en esta charla.
+- Las empresas se nombran como lo que son. Cada afirmación indica quién la hace.
+- Las investigaciones propias de los ponentes, si aparecen, lo hacen solo como idea de tesis.
+- Solo se cita lo que tiene fuente pública: avisos de CISA y de otros organismos oficiales, informes de fabricantes de seguridad, y casos reportados públicamente.
