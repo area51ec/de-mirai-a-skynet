@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="330" viewBox="0 0 1000 330" role="img" aria-label="Cadena de control de un enjambre con salvaguardas">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#04110D"/><stop offset="1" stop-color="#0B2A22"/>
+  </linearGradient>
+</defs>
+<rect width="1000" height="330" fill="url(#bg)"/>
+<text x="500" y="38" text-anchor="middle" font-family="DejaVu Sans, Arial, sans-serif" font-size="20" font-weight="700" fill="#F5F5F5">Cadena de control de un enjambre: dónde se protege</text>
+
+<!-- Nodos -->
+<g font-family="DejaVu Sans, Arial, sans-serif" font-size="14" fill="#C8F5E1" text-anchor="middle">
+  <rect x="40" y="90" width="150" height="62" rx="8" fill="#134E3F" stroke="#3DDC97" stroke-width="1.5"/>
+  <text x="115" y="126">Operador</text>
+  <rect x="290" y="90" width="170" height="62" rx="8" fill="#134E3F" stroke="#3DDC97" stroke-width="1.5"/>
+  <text x="375" y="126">Estación de control</text>
+  <rect x="560" y="90" width="150" height="62" rx="8" fill="#134E3F" stroke="#3DDC97" stroke-width="1.5"/>
+  <text x="635" y="126">Enlace de radio</text>
+  <rect x="810" y="90" width="150" height="62" rx="8" fill="#134E3F" stroke="#3DDC97" stroke-width="1.5"/>
+  <text x="885" y="126">Enjambre</text>
+</g>
+
+<!-- Flujo de órdenes legítimas -->
+<g stroke="#3DDC97" stroke-width="2" stroke-dasharray="6 8" opacity="0.7">
+  <line x1="190" y1="121" x2="290" y2="121"><animate attributeName="stroke-dashoffset" values="0;-28" dur="1.2s" repeatCount="indefinite"/></line>
+  <line x1="460" y1="121" x2="560" y2="121"><animate attributeName="stroke-dashoffset" values="0;-28" dur="1.2s" repeatCount="indefinite"/></line>
+  <line x1="710" y1="121" x2="810" y2="121"><animate attributeName="stroke-dashoffset" values="0;-28" dur="1.2s" repeatCount="indefinite"/></line>
+</g>
+<circle r="5" fill="#3DDC97">
+  <animateMotion dur="3.6s" repeatCount="indefinite" path="M190,121 L810,121"/>
+</circle>
+
+<!-- Puntos de control numerados -->
+<g font-family="DejaVu Sans, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
+  <circle cx="240" cy="121" r="13" fill="#FFB703"/><text x="240" y="126" fill="#04110D">1</text>
+  <circle cx="510" cy="121" r="13" fill="#FFB703"/><text x="510" y="126" fill="#04110D">2</text>
+  <circle cx="760" cy="121" r="13" fill="#FFB703"/><text x="760" y="126" fill="#04110D">3</text>
+  <circle cx="885" cy="180" r="13" fill="#E63946"/><text x="885" y="185" fill="#F5F5F5">4</text>
+</g>
+
+<!-- Salvaguardas -->
+<g font-family="DejaVu Sans, Arial, sans-serif" font-size="13" fill="#C8F5E1">
+  <text x="240" y="170" text-anchor="middle">Autenticación</text>
+  <text x="240" y="186" text-anchor="middle">del mando</text>
+  <text x="510" y="170" text-anchor="middle">Canal cifrado</text>
+  <text x="510" y="186" text-anchor="middle">y autenticado</text>
+  <text x="760" y="170" text-anchor="middle">Geovallado y</text>
+  <text x="760" y="186" text-anchor="middle">punto seguro</text>
+  <text x="885" y="208" text-anchor="middle">Parada de emergencia</text>
+  <text x="885" y="224" text-anchor="middle">independiente de la red</text>
+</g>
+
+<!-- Pulso de verificación en los puntos de control -->
+<g fill="none" stroke="#FFB703" stroke-width="1.5">
+  <circle cx="240" cy="121" r="13"><animate attributeName="r" values="13;26" dur="2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.9;0" dur="2s" repeatCount="indefinite"/></circle>
+  <circle cx="510" cy="121" r="13"><animate attributeName="r" values="13;26" dur="2s" begin="0.6s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.9;0" dur="2s" begin="0.6s" repeatCount="indefinite"/></circle>
+  <circle cx="760" cy="121" r="13"><animate attributeName="r" values="13;26" dur="2s" begin="1.2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.9;0" dur="2s" begin="1.2s" repeatCount="indefinite"/></circle>
+</g>
+
+<!-- Leyenda y fuente -->
+<text x="40" y="276" font-family="DejaVu Sans, Arial, sans-serif" font-size="13" fill="#C8F5E1">1 Quién puede dar órdenes. 2 Que el canal sea confidencial y verificable.</text>
+<text x="40" y="294" font-family="DejaVu Sans, Arial, sans-serif" font-size="13" fill="#C8F5E1">3 Que el enjambre no salga de su zona y tenga un destino seguro. 4 Que se pueda detener aunque la red falle.</text>
+<text x="40" y="318" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" fill="#8A93A3">Diagrama propio. Las salvaguardas son propuesta de diseño de la charla (bloque 7).</text>
+</svg>

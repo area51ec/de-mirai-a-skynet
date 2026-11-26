@@ -2,122 +2,463 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<title>Enjambre con mando central y con mando local</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Enjambre: mando, enlace y salvaguardas</title>
 <style>
-  body { margin: 0; background: #04110D; color: #C8F5E1; font-family: DejaVu Sans, Arial, sans-serif; }
-  header { padding: 10px 16px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-  button { background: #0B2A22; color: #C8F5E1; border: 1px solid #1F7A62; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; background: #04110D; color: #C8F5E1; font-family: "DejaVu Sans", Arial, sans-serif;
+         display: flex; flex-direction: column; overflow: hidden; }
+  header { padding: 8px 12px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid #0B2A22; }
+  button { background: #0B2A22; color: #C8F5E1; border: 1px solid #1F7A62; padding: 5px 10px; border-radius: 4px;
+           cursor: pointer; font-size: 13px; }
+  button kbd { font-family: "DejaVu Sans Mono", monospace; font-size: 11px; opacity: .65; margin-left: 4px; }
   button.activo { background: #1F7A62; }
+  button.aviso { border-color: #FFB703; }
+  button.aviso.activo { background: #FFB703; color: #04110D; }
   button.parada { border-color: #E63946; color: #FFB703; }
   button.parada.activo { background: #E63946; color: #04110D; }
-  #estado { margin-left: auto; font-family: DejaVu Sans Mono, monospace; font-size: 14px; }
-  canvas { display: block; background: #071A14; cursor: crosshair; }
-  footer { padding: 8px 16px; font-size: 12px; color: #8A93A3; }
+  #hud { margin-left: auto; font-family: "DejaVu Sans Mono", monospace; font-size: 12px; text-align: right; color: #8A93A3; }
+  main { flex: 1; display: flex; min-height: 0; }
+  #escena { flex: 1; position: relative; min-width: 0; display: flex; align-items: center; justify-content: center; background: #071A14; }
+  canvas { display: block; max-width: 100%; max-height: 100%; cursor: crosshair; }
+  #rotulo { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); max-width: 90%;
+            background: rgba(4,17,13,.88); border: 1px solid #1F7A62; border-radius: 6px; padding: 8px 14px;
+            font-size: 17px; text-align: center; display: none; }
+  aside { width: 360px; display: flex; flex-direction: column; border-left: 1px solid #0B2A22; min-height: 0;
+          font-family: "DejaVu Sans Mono", monospace; font-size: 11.5px; }
+  aside h2 { font-family: "DejaVu Sans", Arial, sans-serif; font-size: 12px; letter-spacing: .06em; text-transform: uppercase;
+             color: #8A93A3; margin: 8px 10px 4px; font-weight: 600; }
+  #deteccion { padding: 0 10px 6px; line-height: 1.55; }
+  #deteccion .mal { color: #E63946; font-weight: 700; }
+  #deteccion .ojo { color: #FFB703; }
+  #tabla { padding: 0 10px; overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; color: #8A93A3; font-weight: 400; border-bottom: 1px solid #0B2A22; }
+  td, th { padding: 0 3px; line-height: 1.32; white-space: nowrap; }
+  td.num, th.num { text-align: right; }
+  #registro { flex: 1; overflow-y: auto; padding: 0 10px 10px; min-height: 80px; }
+  #registro div { padding: 1px 0; border-bottom: 1px solid #0a221b; }
+  #registro .t { color: #5C6773; margin-right: 6px; }
+  .e-ok { color: #3DDC97; } .e-aviso { color: #FFB703; } .e-mal { color: #E63946; } .e-info { color: #C8F5E1; }
+  footer { padding: 5px 12px; font-size: 11px; color: #8A93A3; border-top: 1px solid #0B2A22; }
+  @media (max-width: 900px) { main { flex-direction: column; } aside { width: auto; height: 40vh; border-left: 0; border-top: 1px solid #0B2A22; } }
 </style>
 </head>
 <body>
 <header>
-  <button id="b-central" class="activo">Mando central</button>
-  <button id="b-local">Pérdida de mando (solo reglas locales)</button>
-  <button id="b-parada" class="parada">Parada de emergencia</button>
-  <button id="b-reiniciar">Reiniciar</button>
-  <div id="estado"></div>
+  <button id="b-restablecer" class="activo">Restablecer mando<kbd>1</kbd></button>
+  <button id="b-perdida" class="aviso">Pérdida de mando<kbd>2</kbd></button>
+  <button id="b-interf" class="aviso">Interferencia<kbd>I</kbd></button>
+  <button id="b-viento">Viento: calma<kbd>V</kbd></button>
+  <button id="b-nofirmada" class="aviso">Orden no firmada<kbd>U</kbd></button>
+  <button id="b-parada" class="parada">Parada de emergencia<kbd>E</kbd></button>
+  <button id="b-guion">Guion<kbd>G</kbd></button>
+  <button id="b-pausa">Pausa<kbd>Espacio</kbd></button>
+  <button id="b-reiniciar">Reiniciar<kbd>R</kbd></button>
+  <button id="b-pantalla">Pantalla completa<kbd>F</kbd></button>
+  <div id="hud"></div>
 </header>
-<canvas id="c" width="900" height="520"></canvas>
+<main>
+  <div id="escena">
+    <canvas id="c" width="900" height="520"></canvas>
+    <div id="rotulo"></div>
+  </div>
+  <aside>
+    <h2>Detección</h2>
+    <div id="deteccion"></div>
+    <h2>Estado por unidad</h2>
+    <div id="tabla"></div>
+    <h2>Registro de la estación</h2>
+    <div id="registro"></div>
+  </aside>
+</main>
 <footer>
-  Simulación local. No se conecta a nada y no contiene ningún mecanismo de ataque.
-  En el modo central, haz clic en el mapa para indicar el punto de destino del operador.
-  La parada de emergencia es una propuesta de diseño, no una norma.
+  Simulación local: no se conecta a nada, no controla hardware y no contiene ningún mecanismo de ataque.
+  Clic en el mapa: orden firmada de destino. Escala reducida (1 cuadro = 50 m, tiempo ×3) para que quepa en pantalla.
+  El failsafe por latido y el retorno al punto seguro imitan el comportamiento habitual de los autopilotos; la parada
+  independiente de la red y el geovallado son propuestas de diseño de la charla, no normas.
 </footer>
 <script>
-const N = 40, W = 900, H = 520;
+"use strict";
+// ---------- Parámetros ----------
+const W = 900, H = 520, N = 24;
+const M_PX = 2;                       // píxeles por metro (1 px = 0,5 m)
+const TS = 3;                         // tiempo simulado por segundo real
+const VMAX = 14 * M_PX;               // 14 m/s
+const ALT = 30;                       // altitud de crucero, m
+const FS_LATIDO = 8;                  // s simulados sin latido antes del failsafe
+const HB_PERIODO = 0.5;               // latido cada 0,5 s simulados (2 Hz)
+const BAT_BAJA = 25, BAT_CRITICA = 10;
+const SEMILLA = 2026;
+const CLAVE = "clave-de-demo-local";  // solo para simular la verificación de firma
+const ESTACION = { x: 40, y: 490 };
+const PUNTO_SEGURO = { x: 125, y: 430 };
+const ALCANCE = 950;                  // px; zona fiable hasta el 75 %
+const GEOVALLA = [[25, 25], [870, 25], [880, 300], [820, 500], [25, 505]];
+const CENTRO = { x: 450, y: 260 };
+
 const cv = document.getElementById("c"), ctx = cv.getContext("2d");
-let drones = [], modo = "central", destino = null, parada = false;
+const $ = (id) => document.getElementById(id);
+
+// ---------- Aleatoriedad reproducible ----------
+function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a);
+  t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+let rnd = mulberry32(SEMILLA);
+
+// ---------- Firma simulada (FNV-1a de 32 bits; no es criptografía real) ----------
+function firmar(texto) { let h = 0x811c9dc5; for (let i = 0; i < texto.length; i++) { h ^= texto.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+  return (h >>> 0).toString(16).padStart(8, "0"); }
+
+// ---------- Estado ----------
+let drones, t, enlace, interferencia, viento, parada, pausa, ordenN, destinoActual, marcaRechazo, guion, tGuion, pasoGuion;
+const ETIQ = { DESPEGANDO: "DESPEGUE", GUIADO: "GUIADO", RTL: "RETORNO", ATERRIZANDO: "ATERRIZA", EN_TIERRA: "EN TIERRA", PARADA: "PARADA" };
+const COLOR = { DESPEGANDO: "#8ECAE6", GUIADO: "#3DDC97", RTL: "#FFB703", ATERRIZANDO: "#8ECAE6", EN_TIERRA: "#5C6773", PARADA: "#E63946" };
+
+function huecoAterrizaje(i) { const col = i % 6, fila = Math.floor(i / 6);
+  return { x: PUNTO_SEGURO.x + (col - 2.5) * 16, y: PUNTO_SEGURO.y + (fila - 1.5) * 16 }; }
 
 function iniciar() {
+  rnd = mulberry32(SEMILLA);
+  t = 0; rafaga = 1; vientoActual = { x: 0, y: 0, ms: 0 }; enlace = true; interferencia = false; viento = 0; parada = false; ordenN = 0;
+  destinoActual = { ...CENTRO }; marcaRechazo = null;
   drones = [];
   for (let i = 0; i < N; i++) {
-    drones.push({ x: Math.random() * W, y: Math.random() * H,
-                  vx: (Math.random() - 0.5) * 2, vy: (Math.random() - 0.5) * 2 });
+    const h = huecoAterrizaje(i);
+    drones.push({ id: i + 1, x: h.x, y: h.y, vx: 0, vy: 0, z: 0, estado: "DESPEGANDO",
+      bat: i === 8 ? 29 : 65 + rnd() * 35, ultimoHB: 0, proxHB: rnd() * HB_PERIODO, calidad: 1,
+      dest: { ...CENTRO }, motivo: "", fuera: false });
   }
+  $("registro").innerHTML = "";
+  log("Estación de control en línea. " + N + " unidades armadas, despegando.", "info");
+  log("Clave de mando cargada. Toda orden se verifica en cada unidad antes de ejecutarse.", "ok");
+  actualizarBotones();
 }
 
-function paso() {
+// ---------- Utilidades ----------
+function dentroGeovalla(x, y) { let dentro = false;
+  for (let i = 0, j = GEOVALLA.length - 1; i < GEOVALLA.length; j = i++) {
+    const [xi, yi] = GEOVALLA[i], [xj, yj] = GEOVALLA[j];
+    if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) dentro = !dentro; }
+  return dentro; }
+function alcanceActual() { return interferencia ? ALCANCE * 0.75 : ALCANCE; }
+function calidadEnlace(d) {
+  if (!enlace) return 0;
+  const r = alcanceActual(), dist = Math.hypot(d.x - ESTACION.x, d.y - ESTACION.y);
+  if (dist < 0.75 * r) return 0.99;
+  return Math.max(0, 0.99 * (r - dist) / (0.25 * r)); }
+function enAire(d) { return d.z > 0.2 && d.estado !== "EN_TIERRA"; }
+function conectado(d) { return t - d.ultimoHB < 1.5; }
+function m(px) { return Math.round(px / M_PX); }
+function reloj() { const s = t; return "T+" + String(Math.floor(s / 60)).padStart(2, "0") + ":" + (s % 60).toFixed(1).padStart(4, "0"); }
+function uid(d) { return "U-" + String(d.id).padStart(2, "0"); }
+function log(texto, tipo) {
+  const div = document.createElement("div");
+  div.innerHTML = "<span class='t'>" + reloj() + "</span><span class='e-" + (tipo || "info") + "'>" + texto + "</span>";
+  const r = $("registro"); r.prepend(div); while (r.children.length > 80) r.lastChild.remove(); }
+
+// ---------- Viento ----------
+const VIENTO_MS = [0, 5, 11], VIENTO_TXT = ["calma", "moderado", "fuerte"];
+let rafaga = 1, vientoActual = { x: 0, y: 0, ms: 0 };
+function vectorViento() {
+  if (!viento) return { x: 0, y: 0, ms: 0 };
+  rafaga += ((1 + 0.45 * Math.sin(t * 0.9) * Math.sin(t * 0.37) + (rnd() - 0.5) * 0.6) - rafaga) * 0.05;
+  const ms = VIENTO_MS[viento] * rafaga, ang = -0.5 + 0.4 * Math.sin(t * 0.05);
+  return { x: Math.cos(ang) * ms * M_PX, y: Math.sin(ang) * ms * M_PX, ms }; }
+
+// ---------- Órdenes ----------
+function ordenDestino(x, y, firmada) {
+  ordenN++;
+  const carga = "DESTINO;" + ordenN + ";" + Math.round(x) + ";" + Math.round(y);
+  const firma = firmada ? firmar(CLAVE + carga) : (rnd() * 0xffffffff >>> 0).toString(16).padStart(8, "0");
+  const txt = "#" + String(ordenN).padStart(2, "0") + " DESTINO (" + m(x) + " m, " + m(y) + " m) firma " + firma;
+  if (firmada && !dentroGeovalla(x, y)) { log(txt + " · RECHAZADA en la estación: destino fuera de la geovalla", "mal");
+    marcaRechazo = { x, y, hasta: t + 6 }; return; }
+  if (!enlace) { log(txt + " · NO ENTREGADA: transmisor sin enlace", "mal"); return; }
+  let ack = 0, rech = 0, sinEnlace = 0;
   for (const d of drones) {
-    let ax = 0, ay = 0, n = 0, cx = 0, cy = 0, avx = 0, avy = 0, sx = 0, sy = 0;
-    for (const o of drones) {
-      if (o === d) continue;
-      const dx = o.x - d.x, dy = o.y - d.y, d2 = dx * dx + dy * dy;
-      if (d2 < 80 * 80) { n++; cx += o.x; cy += o.y; avx += o.vx; avy += o.vy; }
-      if (d2 < 22 * 22 && d2 > 0) { sx -= dx; sy -= dy; }
+    if (!enAire(d) || !conectado(d)) { if (enAire(d)) sinEnlace++; continue; }
+    if (firmar(CLAVE + carga) !== firma) { rech++; continue; }
+    if (d.estado === "GUIADO") { d.dest = { x, y }; ack++; }
+  }
+  if (!firmada) { log(txt + " · origen desconocido · RECHAZADA por " + rech + " unidades: firma inválida", "mal");
+    marcaRechazo = { x, y, hasta: t + 6 }; return; }
+  destinoActual = { x, y };
+  log(txt + " · verificada · ACK " + ack + "/" + N + (sinEnlace ? " · " + sinEnlace + " sin enlace" : ""), "ok");
+}
+function restablecerMando() {
+  if (parada) { log("Parada de emergencia enclavada: reinicia para volver a operar.", "aviso"); return; }
+  enlace = true;
+  let retoman = 0, despegan = 0;
+  for (const d of drones) {
+    if (calidadEnlace(d) <= 0) continue;
+    if ((d.estado === "RTL" || d.estado === "ATERRIZANDO") && d.bat > BAT_BAJA && !d.fuera) { d.estado = "GUIADO"; d.dest = { ...destinoActual }; d.ultimoHB = t; retoman++; }
+    else if (d.estado === "EN_TIERRA" && d.bat > BAT_BAJA) { d.estado = "DESPEGANDO"; d.dest = { ...destinoActual }; d.ultimoHB = t; despegan++; }
+  }
+  log("Operador retoma el mando: " + retoman + (retoman === 1 ? " unidad vuelve" : " unidades vuelven") + " a modo guiado" + (despegan ? ", " + despegan + (despegan === 1 ? " despega" : " despegan") + " de nuevo" : "") + ".", "ok");
+  actualizarBotones();
+}
+function perderMando() {
+  if (!enlace) return;
+  enlace = false;
+  log("TRANSMISOR DE LA ESTACIÓN CAÍDO (simulado). Cada unidad empieza a contar el tiempo sin latido.", "mal");
+  actualizarBotones();
+}
+function alternarInterferencia() {
+  interferencia = !interferencia;
+  log(interferencia ? "Interferencia de radio: el alcance útil baja un 25 %. Las unidades lejanas pierden paquetes."
+                    : "Interferencia despejada: alcance nominal recuperado.", interferencia ? "aviso" : "info");
+  actualizarBotones();
+}
+function cambiarViento(nivel) {
+  viento = nivel === undefined ? (viento + 1) % 3 : nivel;
+  log("Viento " + VIENTO_TXT[viento] + (viento ? " (" + VIENTO_MS[viento] + " m/s, con ráfagas)" : "") + ".", viento === 2 ? "aviso" : "info");
+  actualizarBotones();
+}
+function activarParada() {
+  if (parada) return;
+  parada = true;
+  let n = 0;
+  for (const d of drones) if (enAire(d)) { d.estado = "PARADA"; n++; }
+  log("PARADA DE EMERGENCIA por canal independiente de la red: " + n + " unidades en descenso controlado.", "mal");
+  actualizarBotones();
+}
+function ordenNoFirmada() { ordenDestino(200 + rnd() * 500, 80 + rnd() * 300, false); }
+
+// ---------- Física y lógica a bordo ----------
+function paso(dt) {
+  t += dt;
+  const w = vientoActual = vectorViento();
+  for (const d of drones) {
+    // Enlace y latido (2 Hz)
+    d.calidad = calidadEnlace(d);
+    if (t >= d.proxHB) { d.proxHB += HB_PERIODO; if (rnd() < d.calidad) d.ultimoHB = t; }
+    const sinLatido = t - d.ultimoHB;
+    const vel = Math.hypot(d.vx, d.vy) / M_PX;
+
+    // Batería
+    if (enAire(d) || d.estado === "DESPEGANDO") d.bat = Math.max(0, d.bat - dt * (0.05 + 0.006 * vel + 0.01 * w.ms));
+
+    // Decisiones a bordo
+    if (d.estado === "GUIADO") {
+      if (sinLatido > FS_LATIDO) { d.estado = "RTL"; log(uid(d) + ": " + FS_LATIDO + " s sin latido → FAILSAFE: retorno al punto seguro", "aviso"); }
+      else if (d.bat < BAT_BAJA) { d.estado = "RTL"; log(uid(d) + ": batería baja (" + Math.round(d.bat) + " %) → retorno al punto seguro", "aviso"); }
+      else if (!dentroGeovalla(d.x, d.y)) { d.estado = "RTL"; d.fuera = true; log(uid(d) + ": fuera de la geovalla → retorno automático", "mal"); }
     }
-    if (n > 0) {
-      ax += (cx / n - d.x) * 0.002 + (avx / n - d.vx) * 0.05;
-      ay += (cy / n - d.y) * 0.002 + (avy / n - d.vy) * 0.05;
-    }
-    ax += sx * 0.05; ay += sy * 0.05;
-    if (modo === "central" && destino) {
-      ax += (destino.x - d.x) * 0.0008; ay += (destino.y - d.y) * 0.0008;
-    }
-    if (d.x < 40) ax += 0.3; if (d.x > W - 40) ax -= 0.3;
-    if (d.y < 40) ay += 0.3; if (d.y > H - 40) ay -= 0.3;
-    d.vx += ax; d.vy += ay;
+    if ((d.estado === "RTL" || d.estado === "GUIADO") && d.bat < BAT_CRITICA) {
+      d.estado = "ATERRIZANDO"; log(uid(d) + ": batería crítica (" + Math.round(d.bat) + " %) → aterrizaje inmediato donde está", "mal"); }
+    if (d.fuera && dentroGeovalla(d.x, d.y) && Math.hypot(d.x - PUNTO_SEGURO.x, d.y - PUNTO_SEGURO.y) < 300) d.fuera = false;
+
+    // Movimiento vertical
+    if (d.estado === "DESPEGANDO") { d.z = Math.min(ALT, d.z + 3 * dt); if (d.z >= ALT) d.estado = "GUIADO"; }
+    if (d.estado === "ATERRIZANDO") { d.z = Math.max(0, d.z - 2 * dt); }
+    if (d.estado === "PARADA") { d.z = Math.max(0, d.z - 4 * dt); }
+    if ((d.estado === "ATERRIZANDO" || d.estado === "PARADA") && d.z <= 0) {
+      if (d.estado === "ATERRIZANDO") log(uid(d) + ": en tierra (batería " + Math.round(d.bat) + " %)", "info");
+      d.estado = "EN_TIERRA"; d.vx = d.vy = 0; }
+    if (d.estado === "EN_TIERRA") continue;
+
+    // Movimiento horizontal
+    let ax = 0, ay = 0;
+    if (d.estado === "GUIADO" || d.estado === "RTL") {
+      const obj = d.estado === "RTL" ? huecoAterrizaje(d.id - 1) : d.dest;
+      const dx = obj.x - d.x, dy = obj.y - d.y, dist = Math.hypot(dx, dy) || 1;
+      const vdes = VMAX * Math.min(1, dist / 60);
+      ax += (dx / dist * vdes - d.vx) * 1.6; ay += (dy / dist * vdes - d.vy) * 1.6;
+      let n = 0, cx = 0, cy = 0, avx = 0, avy = 0, sx = 0, sy = 0;
+      const sepR = d.estado === "RTL" && dist < 90 ? 9 : 18;   // en el punto seguro cada uno va a su hueco
+      for (const o of drones) {
+        if (o === d || !enAire(o)) continue;
+        const ox = o.x - d.x, oy = o.y - d.y, d2 = ox * ox + oy * oy;
+        if (d2 < 70 * 70 && o.estado === d.estado) { n++; cx += o.x; cy += o.y; avx += o.vx; avy += o.vy; }
+        if (d2 < sepR * sepR && d2 > 0) { const k = 1 / Math.sqrt(d2); sx -= ox * k; sy -= oy * k; }
+      }
+      if (n > 0 && d.estado === "GUIADO") { ax += (cx / n - d.x) * 0.15 + (avx / n - d.vx) * 0.5; ay += (cy / n - d.y) * 0.15 + (avy / n - d.vy) * 0.5; }
+      const sep = d.estado === "RTL" && dist < 90 ? 8 : 40;
+      ax += sx * sep; ay += sy * sep;
+      if (d.estado === "RTL" && dist < 4 && vel < 2) { d.estado = "ATERRIZANDO"; }
+    } else { ax -= d.vx * 2; ay -= d.vy * 2; }   // aterrizando o parada: frena
+    const a = Math.hypot(ax, ay), AMAX = 40;
+    if (a > AMAX) { ax *= AMAX / a; ay *= AMAX / a; }
+    d.vx += ax * dt; d.vy += ay * dt;
     const v = Math.hypot(d.vx, d.vy);
-    if (parada) { d.vx *= 0.85; d.vy *= 0.85; }
-    else if (v > 3) { d.vx *= 3 / v; d.vy *= 3 / v; }
-    else if (v < 1) { const k = 1 / Math.max(v, 1e-6); d.vx *= k; d.vy *= k; }
-    d.x += d.vx; d.y += d.vy;
+    if (v > VMAX) { d.vx *= VMAX / v; d.vy *= VMAX / v; }
+    // El viento arrastra lo que el controlador no compensa (35 %); en tierra no afecta.
+    const arrastre = d.z > 0.5 ? 0.35 : 0;
+    d.x += (d.vx + w.x * arrastre) * dt; d.y += (d.vy + w.y * arrastre) * dt;
+    d.x = Math.min(W - 4, Math.max(4, d.x)); d.y = Math.min(H - 4, Math.max(4, d.y));
   }
 }
 
+// ---------- Métricas ----------
 function coordinacion() {
-  let sx = 0, sy = 0;
-  for (const d of drones) {
-    const v = Math.hypot(d.vx, d.vy) || 1;
-    sx += d.vx / v; sy += d.vy / v;
-  }
-  return Math.hypot(sx, sy) / N;
-}
+  let sx = 0, sy = 0, n = 0;
+  for (const d of drones) { if (d.estado !== "GUIADO") continue; const v = Math.hypot(d.vx, d.vy); if (v < 2) continue; sx += d.vx / v; sy += d.vy / v; n++; }
+  return n ? Math.hypot(sx, sy) / n : null; }
 
+// ---------- Dibujo ----------
 function dibujar() {
   ctx.clearRect(0, 0, W, H);
-  if (destino && modo === "central") {
-    ctx.strokeStyle = "#FFB703"; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.arc(destino.x, destino.y, 10, 0, Math.PI * 2); ctx.stroke();
-  }
-  const color = parada ? "#8A93A3" : (modo === "central" ? "#3DDC97" : "#C8F5E1");
+  // Cuadrícula de 50 m
+  ctx.strokeStyle = "#0E2A21"; ctx.lineWidth = 1; ctx.font = "10px DejaVu Sans Mono, monospace"; ctx.fillStyle = "#2F5247";
+  for (let x = 0; x <= W; x += 100) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); if (x) ctx.fillText(m(x) + " m", x + 3, H - 4); }
+  for (let y = 0; y <= H; y += 100) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+  // Alcance de radio
+  const r = alcanceActual();
+  ctx.save(); ctx.setLineDash([3, 6]); ctx.strokeStyle = interferencia ? "#7A5A12" : "#1A4D3E";
+  ctx.beginPath(); ctx.arc(ESTACION.x, ESTACION.y, 0.75 * r, -Math.PI / 2, 0); ctx.stroke();
+  ctx.strokeStyle = interferencia ? "#E63946" : "#2C6B58";
+  ctx.beginPath(); ctx.arc(ESTACION.x, ESTACION.y, r, -Math.PI / 2, 0); ctx.stroke(); ctx.restore();
+  // Geovalla
+  ctx.save(); ctx.setLineDash([10, 6]); ctx.strokeStyle = "#FFB703"; ctx.globalAlpha = 0.55; ctx.lineWidth = 1.5;
+  ctx.beginPath(); GEOVALLA.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath(); ctx.stroke(); ctx.restore();
+  ctx.fillStyle = "#B38412"; ctx.fillText("geovalla", 32, 40);
+  // Punto seguro
+  ctx.strokeStyle = "#8A93A3"; ctx.lineWidth = 1.5; ctx.strokeRect(PUNTO_SEGURO.x - 54, PUNTO_SEGURO.y - 38, 108, 76);
+  ctx.fillStyle = "#8A93A3"; ctx.fillText("punto seguro", PUNTO_SEGURO.x - 52, PUNTO_SEGURO.y - 42);
+  // Estación de control
+  ctx.fillStyle = enlace ? "#3DDC97" : "#E63946";
+  ctx.beginPath(); ctx.moveTo(ESTACION.x, ESTACION.y - 16); ctx.lineTo(ESTACION.x - 8, ESTACION.y + 6); ctx.lineTo(ESTACION.x + 8, ESTACION.y + 6); ctx.closePath(); ctx.fill();
+  ctx.fillText(enlace ? "estación" : "estación ✕", ESTACION.x + 10, ESTACION.y + 4);
+  // Destino actual
+  if (enlace && !parada) { ctx.strokeStyle = "#3DDC97"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(destinoActual.x, destinoActual.y, 10, 0, 7); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(destinoActual.x - 15, destinoActual.y); ctx.lineTo(destinoActual.x + 15, destinoActual.y);
+    ctx.moveTo(destinoActual.x, destinoActual.y - 15); ctx.lineTo(destinoActual.x, destinoActual.y + 15); ctx.stroke(); }
+  // Orden rechazada
+  if (marcaRechazo && t < marcaRechazo.hasta) { const { x, y } = marcaRechazo; ctx.strokeStyle = "#E63946"; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(x - 12, y - 12); ctx.lineTo(x + 12, y + 12); ctx.moveTo(x + 12, y - 12); ctx.lineTo(x - 12, y + 12); ctx.stroke();
+    ctx.fillStyle = "#E63946"; ctx.font = "12px DejaVu Sans Mono, monospace"; ctx.fillText("orden rechazada", x + 16, y + 4); }
+  // Drones: sombra en el suelo y cuerpo desplazado por la altitud
+  ctx.font = "9px DejaVu Sans Mono, monospace";
   for (const d of drones) {
-    const ang = Math.atan2(d.vy, d.vx);
-    ctx.save(); ctx.translate(d.x, d.y); ctx.rotate(ang);
-    ctx.fillStyle = color;
-    ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(-6, 4); ctx.lineTo(-6, -4); ctx.closePath(); ctx.fill();
-    ctx.restore();
+    const off = d.z * 0.35, s = 5 + d.z / ALT * 3;
+    ctx.fillStyle = "rgba(0,0,0,.45)"; ctx.beginPath(); ctx.ellipse(d.x + off * 0.4, d.y + off * 0.4, s * 0.8, s * 0.5, 0, 0, 7); ctx.fill();
+    const bx = d.x, by = d.y - off * 0.2;
+    ctx.fillStyle = COLOR[d.estado];
+    if (d.estado === "EN_TIERRA") { ctx.beginPath(); ctx.arc(bx, by, 4, 0, 7); ctx.fill(); }
+    else { const ang = Math.hypot(d.vx, d.vy) > 1 ? Math.atan2(d.vy, d.vx) : 0;
+      ctx.save(); ctx.translate(bx, by); ctx.rotate(ang);
+      ctx.beginPath(); ctx.moveTo(s * 1.4, 0); ctx.lineTo(-s, s * 0.8); ctx.lineTo(-s, -s * 0.8); ctx.closePath(); ctx.fill(); ctx.restore(); }
+    if (enAire(d) && t - d.ultimoHB > 2) { ctx.strokeStyle = "#E63946"; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(bx, by, s + 5, 0, 7); ctx.stroke(); }
+    ctx.fillStyle = "#6E8A80"; ctx.fillText(String(d.id).padStart(2, "0"), bx + 8, by - 6);
   }
-  ctx.fillStyle = "#C8F5E1"; ctx.font = "14px DejaVu Sans Mono, monospace";
-  const etiqueta = modo === "central" ? "Modo: mando central" : "Modo: sin mando, solo reglas locales";
-  ctx.fillText(etiqueta, 12, 22);
-  if (parada) { ctx.fillStyle = "#E63946"; ctx.fillText("PARADA DE EMERGENCIA ACTIVA", 12, 42); }
-  document.getElementById("estado").textContent =
-    "Coordinación: " + Math.round(coordinacion() * 100) + " %";
+  // Indicador de viento y escala
+  const w = vientoActual, wx = 470, wy = 455;
+  ctx.strokeStyle = "#8ECAE6"; ctx.fillStyle = "#8ECAE6"; ctx.lineWidth = 2; ctx.font = "11px DejaVu Sans Mono, monospace";
+  ctx.beginPath(); ctx.arc(wx, wy, 22, 0, 7); ctx.globalAlpha = .3; ctx.stroke(); ctx.globalAlpha = 1;
+  if (w.ms > 0.2) { const k = 20 / (Math.hypot(w.x, w.y) || 1); ctx.beginPath(); ctx.moveTo(wx - w.x * k, wy - w.y * k); ctx.lineTo(wx + w.x * k, wy + w.y * k); ctx.stroke();
+    ctx.beginPath(); ctx.arc(wx + w.x * k, wy + w.y * k, 3, 0, 7); ctx.fill(); }
+  ctx.fillText("viento " + w.ms.toFixed(1) + " m/s", wx + 30, wy + 4);
+  ctx.fillStyle = "#C8F5E1"; ctx.fillRect(600, 485, 100, 2); ctx.fillText("50 m", 635, 480);
+  if (pausa) { ctx.fillStyle = "#FFB703"; ctx.font = "16px DejaVu Sans Mono, monospace"; ctx.fillText("PAUSA", W / 2 - 24, 30); }
 }
 
-function bucle() { paso(); dibujar(); requestAnimationFrame(bucle); }
-
-function marcar(id, activo) {
-  for (const b of ["b-central", "b-local"]) document.getElementById(b).classList.toggle("activo", b === id && activo);
+// ---------- Paneles ----------
+function actualizarPaneles() {
+  const aire = drones.filter(enAire);
+  const conEnlace = drones.filter((d) => enAire(d) && conectado(d)).length;
+  const rtl = drones.filter((d) => d.estado === "RTL").length;
+  const fuera = drones.filter((d) => enAire(d) && !dentroGeovalla(d.x, d.y)).length;
+  const bajas = drones.filter((d) => d.bat < BAT_BAJA).length;
+  const sinLat = aire.filter((d) => t - d.ultimoHB > 2).length;
+  const c = coordinacion();
+  const cls = (v, malo) => v ? (malo ? "mal" : "ojo") : "";
+  $("deteccion").innerHTML =
+    "Enlace de mando: " + (enlace ? "<span>activo</span>" : "<span class='mal'>CAÍDO</span>") + (interferencia ? " <span class='ojo'>· interferencia</span>" : "") + "<br>" +
+    "En el aire " + aire.length + "/" + N + " · con enlace <span class='" + cls(conEnlace < aire.length, false) + "'>" + conEnlace + "</span>" +
+    " · sin latido <span class='" + cls(sinLat, true) + "'>" + sinLat + "</span><br>" +
+    "Retornando <span class='" + cls(rtl, false) + "'>" + rtl + "</span> · fuera de geovalla <span class='" + cls(fuera, true) + "'>" + fuera + "</span>" +
+    " · batería baja <span class='" + cls(bajas, false) + "'>" + bajas + "</span><br>" +
+    "Coordinación del grupo guiado: " + (c === null ? "—" : Math.round(c * 100) + " %") + (parada ? "<br><span class='mal'>PARADA DE EMERGENCIA ACTIVA</span>" : "");
+  let h = "<table><tr><th>Unidad</th><th>Estado</th><th class='num'>Bat.</th><th class='num'>Enlace</th><th class='num'>Latido</th><th class='num'>Alt.</th></tr>";
+  for (const d of drones) {
+    const lat = t - d.ultimoHB, latTxt = lat > 99 ? ">99" : lat.toFixed(1);
+    const rssi = d.calidad > 0 ? Math.round(-45 - 50 * (1 - d.calidad) - 8 * Math.hypot(d.x - ESTACION.x, d.y - ESTACION.y) / ALCANCE) : null;
+    h += "<tr><td>" + uid(d) + "</td><td style='color:" + COLOR[d.estado] + "'>" + ETIQ[d.estado] + "</td>" +
+      "<td class='num' style='color:" + (d.bat < BAT_CRITICA ? "#E63946" : d.bat < BAT_BAJA ? "#FFB703" : "inherit") + "'>" + Math.round(d.bat) + "%</td>" +
+      "<td class='num' style='color:" + (rssi === null ? "#E63946" : d.calidad < 0.7 ? "#FFB703" : "inherit") + "'>" + (rssi === null ? "—" : rssi + " dBm") + "</td>" +
+      "<td class='num' style='color:" + (lat > FS_LATIDO ? "#E63946" : lat > 2 ? "#FFB703" : "inherit") + "'>" + latTxt + " s</td>" +
+      "<td class='num'>" + Math.round(d.z) + " m</td></tr>";
+  }
+  $("tabla").innerHTML = h + "</table>";
+  $("hud").innerHTML = reloj() + " · tiempo ×" + TS + (guion ? " · guion " + Math.floor(tGuion / TS) + " s" : "");
 }
-document.getElementById("b-central").onclick = () => { modo = "central"; marcar("b-central", true); };
-document.getElementById("b-local").onclick = () => { modo = "local"; destino = null; marcar("b-local", true); };
-document.getElementById("b-parada").onclick = (e) => { parada = !parada; e.target.classList.toggle("activo", parada); };
-document.getElementById("b-reiniciar").onclick = () => { parada = false; document.getElementById("b-parada").classList.remove("activo"); iniciar(); };
+function actualizarBotones() {
+  $("b-restablecer").classList.toggle("activo", enlace && !parada);
+  $("b-perdida").classList.toggle("activo", !enlace);
+  $("b-interf").classList.toggle("activo", interferencia);
+  $("b-viento").innerHTML = "Viento: " + VIENTO_TXT[viento] + "<kbd>V</kbd>";
+  $("b-viento").classList.toggle("activo", viento > 0);
+  $("b-parada").classList.toggle("activo", parada);
+  $("b-guion").classList.toggle("activo", !!guion);
+  $("b-pausa").classList.toggle("activo", pausa);
+}
+
+// ---------- Guion para el escenario (segundos reales) ----------
+const GUION = [
+  [0, () => {}, "Despegue. El operador manda con órdenes firmadas; cada unidad las verifica."],
+  [5, () => ordenDestino(560, 220, true), "Orden firmada de destino: el enjambre la acepta (ACK en el registro)."],
+  [14, () => ordenNoFirmada(), "Llega una orden sin firma válida: todas las unidades la rechazan."],
+  [22, () => { ordenDestino(815, 110, true); cambiarViento(2); }, "Viento fuerte con ráfagas: el vuelo deja de ser perfecto. Quien cruza la geovalla vuelve solo."],
+  [36, () => { cambiarViento(1); ordenDestino(650, 230, true); }, "Se acerca al límite del alcance de radio."],
+  [42, () => alternarInterferencia(), "Interferencia: los más lejanos pierden el latido uno a uno y activan el retorno."],
+  [58, () => { alternarInterferencia(); restablecerMando(); }, "Enlace recuperado: el operador retoma el mando."],
+  [63, () => ordenDestino(880, 500, true), "Una orden fuera de la geovalla se rechaza en la propia estación."],
+  [68, () => ordenDestino(430, 240, true), "Orden válida."],
+  [74, () => perderMando(), "Pérdida total del mando: cada dron cuenta los segundos sin latido y vuelve al punto seguro."],
+  [88, () => restablecerMando(), "Mando restablecido: vuelven a modo guiado."],
+  [94, () => activarParada(), "Parada de emergencia por un canal independiente de la red: funciona aunque la red falle."],
+  [104, () => { guion = false; actualizarBotones(); }, "Fin. Pulsa R para reiniciar."],
+];
+function iniciarGuion() { pausa = false; iniciar(); guion = true; tGuion = 0; pasoGuion = 0; log("Guion de escenario iniciado.", "info"); actualizarBotones(); }
+function avanzarGuion() {
+  while (guion && pasoGuion < GUION.length && tGuion >= GUION[pasoGuion][0] * TS) {
+    const [, accion, texto] = GUION[pasoGuion++]; accion();
+    const r = $("rotulo"); r.textContent = texto; r.style.display = "block"; }
+}
+
+// ---------- Bucle ----------
+let anterior = null, ultimoPanel = 0;
+function bucle(ahora) {
+  if (anterior === null) anterior = ahora;
+  const dtReal = Math.min(0.05, (ahora - anterior) / 1000); anterior = ahora;
+  if (!pausa) {
+    const pasos = 3, dt = dtReal * TS / pasos;
+    for (let i = 0; i < pasos; i++) paso(dt);
+    if (guion) { tGuion += dtReal * TS; avanzarGuion(); }
+  }
+  dibujar();
+  if (ahora - ultimoPanel > 250) { actualizarPaneles(); ultimoPanel = ahora; }
+  requestAnimationFrame(bucle);
+}
+
+// ---------- Controles ----------
+function detenerGuion() { if (guion) { guion = false; $("rotulo").style.display = "none"; actualizarBotones(); } }
+const acciones = {
+  "1": restablecerMando, "2": perderMando, "i": alternarInterferencia, "v": () => cambiarViento(), "u": ordenNoFirmada,
+  "e": activarParada, "g": iniciarGuion, " ": () => { pausa = !pausa; actualizarBotones(); },
+  "r": () => { detenerGuion(); pausa = false; iniciar(); }, "f": () => { if (!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); },
+};
+const botones = { "b-restablecer": "1", "b-perdida": "2", "b-interf": "i", "b-viento": "v", "b-nofirmada": "u",
+  "b-parada": "e", "b-guion": "g", "b-pausa": " ", "b-reiniciar": "r", "b-pantalla": "f" };
+for (const [id, k] of Object.entries(botones)) $(id).addEventListener("click", (e) => { e.currentTarget.blur(); acciones[k](); });
+document.addEventListener("keydown", (e) => { const k = e.key.toLowerCase(); if (acciones[k]) { e.preventDefault(); acciones[k](); } });
 cv.addEventListener("click", (e) => {
-  if (modo !== "central") return;
+  if (parada) return;
   const r = cv.getBoundingClientRect();
-  destino = { x: (e.clientX - r.left) * (W / r.width), y: (e.clientY - r.top) * (H / r.height) };
+  ordenDestino((e.clientX - r.left) * (W / r.width), (e.clientY - r.top) * (H / r.height), true);
 });
 
-iniciar();
-bucle();
+// Ajuste del lienzo al espacio disponible (proyector o portátil)
+function ajustar() { const e = $("escena"), k = Math.min(e.clientWidth / W, e.clientHeight / H);
+  cv.style.width = Math.floor(W * k) + "px"; cv.style.height = Math.floor(H * k) + "px"; }
+window.addEventListener("resize", ajustar);
+
+pausa = false; guion = false; tGuion = 0; pasoGuion = 0;
+iniciar(); ajustar();
+if (location.hash === "#guion") iniciarGuion();
+if (location.hash === "#perdida") setTimeout(perderMando, 4000);
+requestAnimationFrame(bucle);
 </script>
 </body>
 </html>
