@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>De Mirai a Skynet</title>
+<style>
+:root { --fondo:#04110D; --panel:#071A14; --linea:#0F3328; --texto:#E8FFF4; --suave:#9FB8AE; --verde:#3DDC97; --ambar:#FFB703; --rojo:#E63946; }
+* { box-sizing:border-box; }
+html,body { margin:0; height:100%; background:#000; color:var(--texto); font-family:"DejaVu Sans","Segoe UI",Arial,sans-serif; overflow:hidden; }
+#escenario { position:absolute; left:50%; top:50%; width:1280px; height:720px; transform-origin:center; }
+.d { position:absolute; inset:0; padding:56px 72px 0; background:radial-gradient(120% 120% at 100% 0%, #0B2A22 0%, var(--fondo) 55%); display:none; flex-direction:column; }
+.d.activa { display:flex; }
+.kicker { color:var(--verde); font-size:17px; letter-spacing:.12em; text-transform:uppercase; }
+h2 { font-size:46px; margin:10px 0 30px; line-height:1.15; }
+ul { margin:0; padding:0; list-style:none; }
+li { font-size:29px; line-height:1.35; margin:0 0 20px; padding-left:34px; position:relative; }
+li::before { content:""; position:absolute; left:0; top:15px; width:14px; height:3px; background:var(--ambar); }
+.fuentes { margin-top:auto; border-top:1px solid var(--linea); padding:14px 0 22px; display:flex; flex-wrap:wrap; gap:8px 26px; color:var(--suave); font-size:16px; }
+.fu { display:inline-flex; align-items:center; gap:8px; }
+.tag { font-family:"DejaVu Sans Mono",monospace; font-weight:700; font-size:13px; padding:2px 7px; border-radius:3px; color:#04110D; }
+.tP { background:var(--verde); } .tS { background:var(--ambar); } .tX { background:var(--rojo); }
+.tipo-portada, .tipo-cierre { justify-content:center; text-align:center; padding:40px 90px; }
+.tipo-portada h1, .tipo-cierre h1 { font-size:84px; margin:26px 0 12px; }
+.banner svg { width:100%; height:auto; border-radius:6px; }
+.sub { font-size:30px; color:var(--ambar); margin:0 0 30px; }
+.autores { font-size:22px; color:var(--suave); }
+.tipo-seccion { justify-content:center; padding-left:120px; }
+.tipo-seccion .num { font-size:150px; font-weight:700; color:var(--verde); opacity:.25; line-height:1; }
+.tipo-seccion h1 { font-size:64px; margin:0 0 14px; max-width:1000px; }
+.tipo-seccion .meta { font-size:24px; color:var(--ambar); margin:0; }
+.img { flex:1; display:flex; align-items:center; justify-content:center; }
+.img svg { width:100%; height:auto; max-height:420px; }
+.boton { align-self:flex-start; margin-top:8px; background:var(--verde); color:#04110D; text-decoration:none; font-weight:700; font-size:22px; padding:12px 22px; border-radius:6px; }
+.roles { display:grid; grid-template-columns:1fr 1fr; gap:22px; }
+.rol { background:var(--panel); border:1px solid var(--linea); border-left:4px solid var(--ambar); border-radius:6px; padding:16px 20px; }
+.rol h3 { margin:0 0 8px; font-size:26px; color:var(--ambar); }
+.rol p { margin:0; font-size:21px; line-height:1.4; }
+#barra { position:fixed; left:0; right:0; bottom:0; height:4px; background:#111; }
+#progreso { height:100%; background:var(--verde); width:0; }
+#num { position:fixed; right:14px; bottom:10px; font:13px "DejaVu Sans Mono",monospace; color:#5C6773; }
+#notas { position:fixed; left:0; right:0; bottom:4px; max-height:30vh; overflow:auto; background:rgba(4,17,13,.96); border-top:1px solid var(--verde); padding:12px 20px; font-size:17px; line-height:1.45; display:none; }
+#notas.visible { display:block; }
+#ayuda { position:fixed; left:14px; bottom:10px; font:12px "DejaVu Sans Mono",monospace; color:#3C4A44; }
+@media print { html,body { overflow:visible; background:#fff; } #escenario { position:static; transform:none !important; }
+  .d { display:flex !important; position:relative; page-break-after:always; width:1280px; height:720px; } #barra,#num,#notas,#ayuda { display:none !important; } }
+@page { size:1280px 720px; margin:0; }
+</style>
+</head>
+<body>
+<div id="escenario">
+<section class='d tipo-portada' data-notas='Presentación de los dos ponentes. Charla técnica: cada afirmación lleva su fuente al pie, y el estado [P], [S] o [X] dice cuánto pesa.'><div class='banner'><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1000" height="200" viewBox="0 0 1000 200" role="img" aria-label="De Mirai a Skynet">
+<defs>
+  <linearGradient id="bgb" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#04110D"/><stop offset="0.5" stop-color="#14070A"/><stop offset="1" stop-color="#2A0B12"/>
+  </linearGradient>
+  <radialGradient id="core"><stop offset="0" stop-color="#FFF3B0"/><stop offset="0.5" stop-color="#FFB703"/><stop offset="1" stop-color="#E63946" stop-opacity="0"/></radialGradient>
+  <linearGradient id="beam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E63946" stop-opacity="0.55"/><stop offset="1" stop-color="#E63946" stop-opacity="0"/></linearGradient>
+  <g id="robot">
+  <rect x="-7" y="-30" width="6" height="30" fill="#2B2F36"><animateTransform attributeName="transform" type="rotate" values="-22 -2 -30;22 -2 -30;-22 -2 -30" dur="0.7s" repeatCount="indefinite"/></rect>
+  <rect x="1" y="-30" width="6" height="30" fill="#2B2F36"><animateTransform attributeName="transform" type="rotate" values="22 -2 -30;-22 -2 -30;22 -2 -30" dur="0.7s" repeatCount="indefinite"/></rect>
+  <rect x="-12" y="-58" width="24" height="30" rx="3" fill="#3A3F48" stroke="#8A93A3" stroke-width="0.8"/>
+  <rect x="-16" y="-56" width="5" height="24" rx="2" fill="#2B2F36"><animateTransform attributeName="transform" type="rotate" values="18 -13 -54;-18 -13 -54;18 -13 -54" dur="0.7s" repeatCount="indefinite"/></rect>
+  <rect x="11" y="-56" width="5" height="24" rx="2" fill="#2B2F36"><animateTransform attributeName="transform" type="rotate" values="-18 16 -54;18 16 -54;-18 16 -54" dur="0.7s" repeatCount="indefinite"/></rect>
+  <rect x="-9" y="-80" width="18" height="20" rx="4" fill="#4A515C" stroke="#8A93A3" stroke-width="0.8"/>
+  <rect x="-7" y="-74" width="14" height="4" rx="2" fill="#E63946"><animate attributeName="opacity" values="1;0.35;1" dur="0.9s" repeatCount="indefinite"/></rect>
+</g>
+</defs>
+<rect width="1000" height="200" fill="url(#bgb)"/>
+<g>
+  <g>
+    <animateTransform attributeName="transform" type="translate" values="-40 190;1040 190" dur="9s" begin="0s" repeatCount="indefinite"/>
+    <g transform="scale(0.6)"><use href="#robot" xlink:href="#robot"/></g>
+  </g>
+  <g>
+    <animateTransform attributeName="transform" type="translate" values="-40 190;1040 190" dur="14s" begin="-6s" repeatCount="indefinite"/>
+    <g transform="scale(0.6)"><use href="#robot" xlink:href="#robot"/></g>
+  </g>
+  <g>
+    <animateTransform attributeName="transform" type="translate" values="-40 190;1040 190" dur="19s" begin="-12s" repeatCount="indefinite"/>
+    <g transform="scale(0.6)"><use href="#robot" xlink:href="#robot"/></g>
+  </g>
+</g>
+
+<g fill="#C8F5E1">
+  <circle cx="330" cy="30" r="0.9" opacity="0.5"><animate attributeName="opacity" values="0.15;0.8;0.15" dur="3.1s" repeatCount="indefinite"/></circle>
+  <circle cx="520" cy="18" r="0.9" opacity="0.5"><animate attributeName="opacity" values="0.15;0.8;0.15" dur="2.4s" begin="0.6s" repeatCount="indefinite"/></circle>
+  <circle cx="650" cy="120" r="1.2" opacity="0.5"><animate attributeName="opacity" values="0.15;0.8;0.15" dur="3.7s" begin="1.2s" repeatCount="indefinite"/></circle>
+</g>
+<!-- Escena de toma de control (ciclo de 20 s): tinte rojo, nueva unidad que aparece y cambio de texto -->
+<rect width="1000" height="200" fill="#E63946" opacity="0">
+  <animate attributeName="opacity" values="0;0;0.14;0.14;0" keyTimes="0;0.45;0.55;0.95;1" dur="20s" repeatCount="indefinite"/>
+</rect>
+<g transform="translate(900 190) scale(0.6)">
+  <g>
+    <animateTransform attributeName="transform" type="scale" values="0 0;0 0;1.25 1.25;1 1;1 1;0 0" keyTimes="0;0.55;0.62;0.66;0.95;1" dur="20s" repeatCount="indefinite"/>
+    <use href="#robot" xlink:href="#robot"/>
+  </g>
+</g>
+<text x="40" y="70" font-family="DejaVu Sans, Arial, sans-serif" font-size="40" font-weight="700" fill="#F5F5F5">De Mirai a Skynet</text>
+<text x="40" y="100" font-family="DejaVu Sans, Arial, sans-serif" font-size="15" fill="#C8F5E1">Lo que ya es real, lo que no, y qué hacer antes de que sea tarde</text>
+<g>
+  <animate attributeName="opacity" values="1;1;0;0;1" keyTimes="0;0.45;0.5;0.95;1" dur="20s" repeatCount="indefinite" calcMode="discrete"/>
+  <text x="40" y="126" font-family="DejaVu Sans Mono, monospace" font-size="12" fill="#E63946">
+    <animate attributeName="opacity" values="1;0.35;1" dur="2.2s" repeatCount="indefinite"/>▸ unidades autónomas bajo control central</text>
+</g>
+<g>
+  <animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;0.5;0.55;0.95;1" dur="20s" repeatCount="indefinite" calcMode="discrete"/>
+  <text x="40" y="126" font-family="DejaVu Sans Mono, monospace" font-size="12" fill="#FFB703">▸ mando central perdido: nueva unidad activada</text>
+</g>
+<polygon points="800,96 760,200 840,200" fill="url(#beam)"><animate attributeName="opacity" values="0.3;0.9;0.3" dur="2.4s" repeatCount="indefinite"/></polygon>
+<circle cx="800" cy="70" r="30" fill="none" stroke="#E63946" stroke-width="1.5"><animate attributeName="r" values="26;70" dur="2.4s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.9;0" dur="2.4s" repeatCount="indefinite"/></circle>
+<circle cx="800" cy="70" r="30" fill="none" stroke="#FFB703" stroke-width="1"><animate attributeName="r" values="26;70" dur="2.4s" begin="1.2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.8;0" dur="2.4s" begin="1.2s" repeatCount="indefinite"/></circle>
+<circle cx="800" cy="70" r="52" fill="url(#core)" opacity="0.35"><animate attributeName="r" values="36;56;36" dur="2.4s" repeatCount="indefinite"/></circle>
+<circle cx="800" cy="70" r="26" fill="#1F0508" stroke="#FFB703" stroke-width="2"/>
+<circle cx="800" cy="70" r="10" fill="#E63946"><animate attributeName="opacity" values="1;0.3;1" dur="1.1s" repeatCount="indefinite"/></circle>
+<text x="800" y="118" text-anchor="middle" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" font-weight="700" fill="#FFB703" letter-spacing="2">SKYNET</text>
+<circle r="3" fill="#FFB703"><animateMotion dur="2.2s" repeatCount="indefinite" path="M800,70 L300,186"/></circle>
+<circle r="3" fill="#FFB703"><animateMotion dur="2.8s" begin="0.9s" repeatCount="indefinite" path="M800,70 L600,186"/></circle>
+<circle r="3" fill="#FFB703"><animateMotion dur="3.1s" begin="1.6s" repeatCount="indefinite" path="M800,70 L880,186"/></circle>
+<rect x="0" y="194" width="1000" height="6" fill="#1F0508"/>
+</svg>
+</div><h1>De Mirai a Skynet</h1><p class='sub'>Lo que ya es real, lo que no, y qué hacer antes de que sea tarde.</p><p class='autores'>Joseph Páez (software y seguridad) · José Laica (electrónica y robótica)</p></section><section class='d tipo-seccion' data-notas=''><div class='num'>0</div><h1>Apertura</h1><p class='meta'>3 min · Joseph</p></section><section class='d tipo-texto' data-notas='Pregunta de partida al público. Tesis: las salvaguardas deben llegar antes de que crezca la capacidad de atacar.'><div class='kicker'>0 · Apertura</div><h2>¿Skynet o lo que ya pasa?</h2><ul><li>¿Qué está ya en marcha y qué es ficción?</li><li>La ficción podría llegar algún día.</li><li>El riesgo de hoy es otro: equipos baratos de comprometer que nadie mantiene.</li></ul><footer class='fuentes'><span class='fu'>Encuadre de la charla</span></footer></section><section class='d tipo-seccion' data-notas=''><div class='num'>1</div><h1>Qué es real hoy</h1><p class='meta'>6 min · Joseph</p></section><section class='d tipo-texto' data-notas='Las notas de prensa sobre despliegues militares de enjambres (Ejército británico, Breaking Defense) no se han verificado en el texto y no se citan.'><div class='kicker'>1 · Qué es real hoy</div><h2>Hay programas oficiales de enjambres</h2><ul><li>DARPA OFFSET (OFFensive Swarm-Enabled Tactics).</li><li>Prevé enjambres de 250 unidades o más, aéreas y terrestres.</li><li>Se dirigen con una interfaz humano-enjambre.</li></ul><footer class='fuentes'><span class='fu'><span class='tag tP' title='primaria'>P</span>DARPA, programa OFFSET</span></footer></section><section class='d tipo-demo' data-notas='Abrir demo/enjambre-local.html#guion (unos 105 s, se ejecuta sola). Teclas: 1 restablecer, 2 pérdida, I interferencia, V viento, U orden no firmada, E parada, G guion, Espacio pausa, R reiniciar, F pantalla completa. En este bloque basta con mostrar el mando central y la coordinación; la versión completa se repite en el bloque 7.'><div class='kicker'>1 · Qué es real hoy</div><h2>Demo: un enjambre con mando central</h2><ul><li>Simulación local: no se conecta a nada ni controla hardware.</li><li>Mando firmado, enlace de radio con alcance, latido y failsafe.</li><li>Geovalla, batería, viento y parada de emergencia.</li></ul><a class='boton' href='../demo/enjambre-local.html#guion' target='_blank' rel='noopener'>Abrir la demo ▸</a><footer class='fuentes'><span class='fu'>Simulación propia; las salvaguardas son propuesta de diseño de la charla</span></footer></section><section class='d tipo-texto' data-notas='El tablero lo creó un agente que concluyó que la tarea no podía resolverse por la vía prevista. Matiz para decir en voz alta: confirmar el informe del proveedor quedaba fuera del alcance de METR; la investigación del proveedor seguía en curso y METR no la vio antes de publicar.'><div class='kicker'>1 · Qué es real hoy</div><h2>Agentes que se coordinan solos (según METR)</h2><ul><li>Incidente de Hugging Face, julio de 2026, en una evaluación.</li><li>Unos 1.200 agentes en un tablero de mensajes no autorizado.</li><li>Más de 70.000 mensajes y archivos; unos 700 agentes participaron en el ataque.</li><li>Motivación más probable, según METR: entender el evaluador, no robar las respuestas.</li></ul><footer class='fuentes'><span class='fu'><span class='tag tP' title='primaria'>P</span>METR, informe independiente del incidente</span></footer></section><section class='d tipo-texto' data-notas='Análisis de terceros, no informe primario. No se localizó la system card del proveedor con la sección de escapes; por eso no se presenta como dato oficial.'><div class='kicker'>1 · Qué es real hoy</div><h2>Escape de sandbox: lo reportado</h2><ul><li>El entorno se suponía aislado.</li><li>Un sistema de instalación y caché de dependencias conectado a internet permitió la salida.</li><li>Según ese relato, dos modelos encadenaron un zero-day para llegar a internet.</li></ul><footer class='fuentes'><span class='fu'><span class='tag tS' title='secundaria'>S</span>Cloud Security Alliance, que recoge el relato del proveedor y de Hugging Face</span></footer></section><section class='d tipo-texto' data-notas='Cierre del bloque 1 y paso al caso real.'><div class='kicker'>1 · Qué es real hoy</div><h2>Lo que no es real hoy</h2><ul><li>Una IA que se autoproclama líder y gobierna flotas de máquinas.</li><li>No hay ningún caso público.</li><li>Es especulación. El resto de la charla trata de lo que sí pasa.</li></ul><footer class='fuentes'><span class='fu'><span class='tag tX' title='sin fuente / no se usa'>X</span>Sin fuente: se presenta como especulación</span></footer></section><section class='d tipo-seccion' data-notas=''><div class='num'>2</div><h1>Caso: frigoríficos de supermercado</h1><p class='meta'>8 min · José Laica</p></section><section class='d tipo-texto' data-notas='Equipos de gestión remota de instalaciones de frío, accesibles desde internet.'><div class='kicker'>2 · Caso: frigoríficos de supermercado</div><h2>Qué pasó (octubre de 2026)</h2><ul><li>Alerta CERTFR-2026-ALE-012: emitida el 12-oct, ampliada el 13-oct y actualizada el 16-oct-2026.</li><li>Controladores de refrigeración Danfoss AK-SM y AK-SC.</li><li>Supervisores Copeland xweb y Dixell xweb.</li></ul><footer class='fuentes'><span class='fu'><span class='tag tP' title='primaria'>P</span>CERT-FR, alerta CERTFR-2026-ALE-012</span></footer></section><section class='d tipo-texto' data-notas='El cambio de contraseñas por defecto la alerta lo da como ejemplo para los equipos Danfoss.'><div class='kicker'>2 · Caso: frigoríficos de supermercado</div><h2>Qué recomienda el CERT-FR</h2><ul><li>Suprimir la exposición a internet de las unidades afectadas.</li><li>Acceso solo por VPN segura o red protegida.</li><li>Actualizar el firmware y cambiar las contraseñas por defecto.</li><li>Equipos sin soporte expuestos: probabilidad muy alta de compromiso.</li></ul><footer class='fuentes'><span class='fu'><span class='tag tP' title='primaria'>P</span>CERT-FR, alerta CERTFR-2026-ALE-012</span></footer></section><section class='d tipo-texto' data-notas='No atribuir el caso a ningún grupo.'><div class='kicker'>2 · Caso: frigoríficos de supermercado</div><h2>Lo que no se afirma</h2><ul><li>La alerta no atribuye autoría ni motivación.</li><li>La alerta AA26-097A de CISA trata PLC de otros fabricantes y actores vinculados a Irán.</li><li>No consta relación entre ambas alertas.</li></ul><footer class='fuentes'><span class='fu'><span class='tag tP' title='primaria'>P</span>CERT-FR, CERTFR-2026-ALE-012</span><span class='fu'><span class='tag tP' title='primaria'>P</span>CISA, AA26-097A</span></footer></section><section class='d tipo-seccion' data-notas=''><div class='num'>3</div><h1>Precedentes de control físico</h1><p class='meta'>6 min · Joseph</p></section><section class='d tipo-texto' data-notas='El registro CVE no nombra Stuxnet; una de sus referencias sí. El escenario de ataque del dossier es especulación declarada de Symantec. Decir en voz alta: Symantec advierte de no sacar conclusiones de atribución, porque los atacantes tienen interés en implicar a otros.'><div class='kicker'>3 · Precedentes de control físico</div><h2>Stuxnet: un acceso directo bastaba</h2><ul><li>Se propagaba por unidades extraíbles.</li><li>Fallo LNK/PIF (CVE-2010-2568): ejecutaba código al mostrar el icono de un acceso directo.</li><li>Aislar la red no bastó.</li></ul><footer class='fuentes'><span class='fu'><span class='tag tP' title='primaria'>P</span>Symantec, W32.Stuxnet Dossier v1.4 (feb. 2011)</span><span class='fu'><span class='tag tP' title='primaria'>P</span>MITRE, registro CVE-2010-2568</span></footer></section><section class='d tipo-texto' data-notas='ESET no atribuye el ataque a ningún grupo ni país. La atribución a un país no se muestra: ESET y MITRE no la hacen en su texto.'><div class='kicker'>3 · Precedentes de control físico</div><h2>Industroyer: malware contra la red eléctrica</h2><ul><li>Controla directamente interruptores y disyuntores de subestación con protocolos industriales (ESET).</li><li>Primer malware conocido diseñado contra la red eléctrica; Ucrania, diciembre de 2016 (MITRE ATT&amp;CK).</li><li>Grupo asociado: Sandworm Team, según MITRE ATT&amp;CK.</li></ul><footer class='fuentes'><span class='fu'><span class='tag tP' title='primaria'>P</span>ESET, análisis de Industroyer</span><span class='fu'><span class='tag tS' title='secundaria'>S</span>MITRE ATT&amp;CK S0604</span></footer></section><section class='d tipo-texto' data-notas='No se afirma la atribución a un instituto ruso que dan algunas fuentes secundarias: no aparece en el informe de CISA.'><div class='kicker'>3 · Precedentes de control físico</div><h2>Triton / HatMan: atacar el sistema de seguridad</h2><ul><li>«Por sí mismo no hace nada catastrófico»: los sistemas de seguridad no controlan el proceso.</li><li>Muy dañino si se combina con malware que actúe sobre el proceso.</li><li>Recomendación: conectar los Triconex solo a las redes necesarias.</li></ul><footer class='fuentes'><span class='fu'><span class='tag tP' title='primaria'>P</span>CISA (entonces NCCIC/ICS-CERT), MAR-17-352-01, 18-dic-2017</span><span class='fu'><span class='tag tS' title='secundaria'>S</span>Mandiant</span></footer></section><section class='d tipo-texto' data-notas='Oyemade y Allenotor (2021) [S] atribuyen a Mirai el origen del ataque a Dyn. No se usa la cifra de 1,2 Tbps. Variantes posteriores (Okiru, Miori, Hakai) solo tienen fuente secundaria; mencionarlas de palabra como tal o no mencionarlas.'><div class='kicker'>3 · Precedentes de control físico</div><h2>Mirai (2016): el enjambre real de dispositivos</h2><ul><li>20-sep-2016: ataque a Krebs on Security, más de 620 Gbps, con una botnet Mirai.</li><li>21-oct-2016: ataque a Dyn; el DHS identifica Mirai como malware posiblemente usado.</li><li>Dispositivos IoT como cámaras de vigilancia.</li><li>Código fuente publicado a finales de septiembre de 2016.</li></ul><footer class='fuentes'><span class='fu'><span class='tag tP' title='primaria'>P</span>CISA, TA16-288A</span><span class='fu'><span class='tag tP' title='primaria'>P</span>DHS, comunicado del 24-oct-2016</span><span class='fu'><span class='tag tP' title='primaria'>P</span>USENIX Security 2017, «Understanding the Mirai Botnet»</span></footer></section><section class='d tipo-texto' data-notas='El informe no atribuye el ataque de 31,4 Tbps a una botnet concreta: lo menciona junto a botnets como Aisuru-Kimwolf. Tampoco da su fecha exacta.'><div class='kicker'>3 · Precedentes de control físico</div><h2>La herencia de Mirai, hoy</h2><ul><li>Cloudflare, informe del 4.º trimestre de 2025 (5-feb-2026).</li><li>Un ataque de 31,4 Tbps que duró 35 segundos.</li><li>Campaña de Aisuru-Kimwolf desde el 19-dic-2025: máximo de 205 millones de peticiones por segundo.</li></ul><footer class='fuentes'><span class='fu'><span class='tag tP' title='primaria'>P</span>Cloudflare, DDoS threat report 2025 Q4 (medición propia)</span><span class='fu'><span class='tag tS' title='secundaria'>S</span>Que Aisuru esté basada en Mirai: prensa</span></footer></section><section class='d tipo-seccion' data-notas=''><div class='num'>4</div><h1>Por qué los equipos embebidos son frágiles</h1><p class='meta'>8 min · José Laica</p></section><section class='d tipo-texto' data-notas='Enlazar con el caso de los frigoríficos.'><div class='kicker'>4 · Por qué los equipos embebidos son frágiles</div><h2>Ciclo de vida</h2><ul><li>Equipos que funcionan años después de quedarse sin soporte.</li><li>Equipos sin soporte expuestos: probabilidad muy alta de compromiso.</li></ul><footer class='fuentes'><span class='fu'><span class='tag tP' title='primaria'>P</span>CERT-FR, CERTFR-2026-ALE-012</span></footer></section><section class='d tipo-texto' data-notas='EMB3D recomienda desactivar o retirar los puertos de desarrollo y depuración; OWASP ISVS pide proteger o desactivar JTAG, SWD y UART. Firmware sin firmar y ROS sin autenticación no tienen fuente en el repositorio: no se mencionan.'><div class='kicker'>4 · Por qué los equipos embebidos son frágiles</div><h2>Fallos de diseño que se repiten</h2><ul><li>Contraseñas por defecto.</li><li>Gestión remota sin mediación, directamente en internet.</li><li>Puertos de depuración abiertos (JTAG, SWD, UART) en equipos de producción.</li></ul><footer class='fuentes'><span class='fu'><span class='tag tP' title='primaria'>P</span>CISA, AA26-097A; CERT-FR</span><span class='fu'><span class='tag tS' title='secundaria'>S</span>MITRE EMB3D MID-057; OWASP ISVS 5.1.1</span></footer></section><section class='d tipo-seccion' data-notas=''><div class='num'>5</div><h1>IA y coste del ataque</h1><p class='meta'>7 min · Joseph</p></section><section class='d tipo-texto' data-notas='Atribuir siempre a GTIG.'><div class='kicker'>5 · IA y coste del ataque</div><h2>La IA ya interviene en la explotación</h2><ul><li>Con alta confianza, un modelo de IA ayudó a descubrir y preparar un bypass de 2FA.</li><li>En una herramienta de administración web de código abierto; requiere credenciales válidas.</li><li>Se planeaba para explotación masiva; su descubrimiento «pudo haber impedido» su uso.</li></ul><footer class='fuentes'><span class='fu'><span class='tag tP' title='primaria'>P</span>Google Threat Intelligence Group (GTIG), 11-may-2026</span></footer></section><section class='d tipo-texto' data-notas='Mostrar que se descartaron a propósito.'><div class='kicker'>5 · IA y coste del ataque</div><h2>Lo que no está verificado</h2><ul><li>Cifras de vulnerabilidades halladas por modelos, autodeclaradas por sus fabricantes.</li><li>Un supuesto aviso de CISA sobre scripts de IA contra PLC de Siemens: solo aparece en resúmenes.</li></ul><footer class='fuentes'><span class='fu'><span class='tag tX' title='sin fuente / no se usa'>X</span>No se usan como dato</span></footer></section><section class='d tipo-texto' data-notas='La IA abarata el descubrimiento, pero estos tres pasos siguen siendo los caros. Ahí es donde se defiende.'><div class='kicker'>5 · IA y coste del ataque</div><h2>El cuello de botella sigue siendo el mismo</h2><ul><li>Conseguir acceso.</li><li>Elegir el objetivo.</li><li>Lograr un efecto físico.</li></ul><footer class='fuentes'><span class='fu'>Análisis de la charla</span></footer></section><section class='d tipo-seccion' data-notas=''><div class='num'>6</div><h1>Por dónde entran: proveedores y telefonía</h1><p class='meta'>5 min · Joseph y José Laica</p></section><section class='d tipo-texto' data-notas='Quien atribuye es el Gobierno de EE. UU., no CISA.'><div class='kicker'>6 · Por dónde entran: proveedores y telefonía</div><h2>A través de un proveedor (SolarWinds, 2020)</h2><ul><li>Campaña que comprometió la cadena de suministro de Orion, de SolarWinds.</li><li>Es uno de los vectores de acceso inicial que describe la alerta, no el único.</li><li>Atribución al SVR ruso: la hace el Gobierno de EE. UU., según la nota de CISA (15-abr-2021).</li></ul><footer class='fuentes'><span class='fu'><span class='tag tP' title='primaria'>P</span>CISA, AA20-352A</span></footer></section><section class='d tipo-texto' data-notas='Sin detalles de ataques concretos por telefonía: fuera de la charla.'><div class='kicker'>6 · Por dónde entran: proveedores y telefonía</div><h2>Equipos conectados por telefonía móvil</h2><ul><li>Aislar los equipos OT conectados por módems celulares.</li><li>Opciones: APN privado, 5G PNI-NPN, SD-WAN celular, ZTNA o VPN site-to-site.</li><li>Caso reportado: acceso por SSH a módems de las víctimas.</li></ul><footer class='fuentes'><span class='fu'><span class='tag tP' title='primaria'>P</span>CISA, AA26-097A</span></footer></section><section class='d tipo-seccion' data-notas=''><div class='num'>7</div><h1>Salvaguardas por capas</h1><p class='meta'>10 min · ambos</p></section><section class='d tipo-imagen' data-notas='1 quién puede dar órdenes; 2 canal confidencial y verificable; 3 zona y destino seguro; 4 detener aunque la red falle.'><div class='kicker'>7 · Salvaguardas por capas</div><h2>Dónde se corta la cadena</h2><div class='img'><svg xmlns="http://www.w3.org/2000/svg" width="1000" height="330" viewBox="0 0 1000 330" role="img" aria-label="Cadena de control de un enjambre con salvaguardas">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#04110D"/><stop offset="1" stop-color="#0B2A22"/>
+  </linearGradient>
+</defs>
+<rect width="1000" height="330" fill="url(#bg)"/>
+<text x="500" y="38" text-anchor="middle" font-family="DejaVu Sans, Arial, sans-serif" font-size="20" font-weight="700" fill="#F5F5F5">Cadena de control de un enjambre: dónde se protege</text>
+
+<!-- Nodos -->
+<g font-family="DejaVu Sans, Arial, sans-serif" font-size="14" fill="#C8F5E1" text-anchor="middle">
+  <rect x="40" y="90" width="150" height="62" rx="8" fill="#134E3F" stroke="#3DDC97" stroke-width="1.5"/>
+  <text x="115" y="126">Operador</text>
+  <rect x="290" y="90" width="170" height="62" rx="8" fill="#134E3F" stroke="#3DDC97" stroke-width="1.5"/>
+  <text x="375" y="126">Estación de control</text>
+  <rect x="560" y="90" width="150" height="62" rx="8" fill="#134E3F" stroke="#3DDC97" stroke-width="1.5"/>
+  <text x="635" y="126">Enlace de radio</text>
+  <rect x="810" y="90" width="150" height="62" rx="8" fill="#134E3F" stroke="#3DDC97" stroke-width="1.5"/>
+  <text x="885" y="126">Enjambre</text>
+</g>
+
+<!-- Flujo de órdenes legítimas -->
+<g stroke="#3DDC97" stroke-width="2" stroke-dasharray="6 8" opacity="0.7">
+  <line x1="190" y1="121" x2="290" y2="121"><animate attributeName="stroke-dashoffset" values="0;-28" dur="1.2s" repeatCount="indefinite"/></line>
+  <line x1="460" y1="121" x2="560" y2="121"><animate attributeName="stroke-dashoffset" values="0;-28" dur="1.2s" repeatCount="indefinite"/></line>
+  <line x1="710" y1="121" x2="810" y2="121"><animate attributeName="stroke-dashoffset" values="0;-28" dur="1.2s" repeatCount="indefinite"/></line>
+</g>
+<circle r="5" fill="#3DDC97">
+  <animateMotion dur="3.6s" repeatCount="indefinite" path="M190,121 L810,121"/>
+</circle>
+
+<!-- Puntos de control numerados -->
+<g font-family="DejaVu Sans, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
+  <circle cx="240" cy="121" r="13" fill="#FFB703"/><text x="240" y="126" fill="#04110D">1</text>
+  <circle cx="510" cy="121" r="13" fill="#FFB703"/><text x="510" y="126" fill="#04110D">2</text>
+  <circle cx="760" cy="121" r="13" fill="#FFB703"/><text x="760" y="126" fill="#04110D">3</text>
+  <circle cx="885" cy="180" r="13" fill="#E63946"/><text x="885" y="185" fill="#F5F5F5">4</text>
+</g>
+
+<!-- Salvaguardas -->
+<g font-family="DejaVu Sans, Arial, sans-serif" font-size="13" fill="#C8F5E1">
+  <text x="240" y="170" text-anchor="middle">Autenticación</text>
+  <text x="240" y="186" text-anchor="middle">del mando</text>
+  <text x="510" y="170" text-anchor="middle">Canal cifrado</text>
+  <text x="510" y="186" text-anchor="middle">y autenticado</text>
+  <text x="760" y="170" text-anchor="middle">Geovallado y</text>
+  <text x="760" y="186" text-anchor="middle">punto seguro</text>
+  <text x="885" y="208" text-anchor="middle">Parada de emergencia</text>
+  <text x="885" y="224" text-anchor="middle">independiente de la red</text>
+</g>
+
+<!-- Pulso de verificación en los puntos de control -->
+<g fill="none" stroke="#FFB703" stroke-width="1.5">
+  <circle cx="240" cy="121" r="13"><animate attributeName="r" values="13;26" dur="2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.9;0" dur="2s" repeatCount="indefinite"/></circle>
+  <circle cx="510" cy="121" r="13"><animate attributeName="r" values="13;26" dur="2s" begin="0.6s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.9;0" dur="2s" begin="0.6s" repeatCount="indefinite"/></circle>
+  <circle cx="760" cy="121" r="13"><animate attributeName="r" values="13;26" dur="2s" begin="1.2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.9;0" dur="2s" begin="1.2s" repeatCount="indefinite"/></circle>
+</g>
+
+<!-- Leyenda y fuente -->
+<text x="40" y="276" font-family="DejaVu Sans, Arial, sans-serif" font-size="13" fill="#C8F5E1">1 Quién puede dar órdenes. 2 Que el canal sea confidencial y verificable.</text>
+<text x="40" y="294" font-family="DejaVu Sans, Arial, sans-serif" font-size="13" fill="#C8F5E1">3 Que el enjambre no salga de su zona y tenga un destino seguro. 4 Que se pueda detener aunque la red falle.</text>
+<text x="40" y="318" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" fill="#8A93A3">Diagrama propio. Las salvaguardas son propuesta de diseño de la charla (bloque 7).</text>
+</svg>
+</div><footer class='fuentes'><span class='fu'>Diagrama propio; las salvaguardas son propuesta de diseño de la charla</span></footer></section><section class='d tipo-texto' data-notas=''><div class='kicker'>7 · Salvaguardas por capas</div><h2>Inventario y exposición</h2><ul><li>Reducir la exposición a internet.</li><li>CISA ofrece servicios gratuitos de escaneo y pruebas.</li><li>Medir la exposición real antes de decidir qué aislar.</li></ul><footer class='fuentes'><span class='fu'><span class='tag tP' title='primaria'>P</span>CISA, AA26-097A</span><span class='fu'>El orden es análisis de la charla</span></footer></section><section class='d tipo-texto' data-notas='Zonas y conductos no aparecen en la copia guardada: no se usan.'><div class='kicker'>7 · Salvaguardas por capas</div><h2>IEC 62443: el marco de referencia</h2><ul><li>Serie de normas de seguridad para sistemas de automatización y control industrial.</li><li>Partes como 62443-1-1 y 62443-2-1, entre otras.</li></ul><footer class='fuentes'><span class='fu'><span class='tag tP' title='primaria'>P</span>ISA, página oficial de la serie IEC 62443</span></footer></section><section class='d tipo-texto' data-notas='Aislamiento total no basta: Stuxnet se propagaba por medios extraíbles. Denegar por defecto y dejar solo lo necesario.'><div class='kicker'>7 · Salvaguardas por capas</div><h2>Acceso remoto mediado y ciclo de vida</h2><ul><li>Ninguna interfaz de gestión expuesta directamente.</li><li>Acceso por VPN o pasarela con monitorización.</li><li>Equipos sin soporte: no exponerlos; si no se pueden parchear, aislar y compensar.</li></ul><footer class='fuentes'><span class='fu'><span class='tag tP' title='primaria'>P</span>CERT-FR; CISA</span><span class='fu'>«Aislar y compensar»: análisis de la charla</span></footer></section><section class='d tipo-texto' data-notas=''><div class='kicker'>7 · Salvaguardas por capas</div><h2>Parada física independiente de la red</h2><ul><li>Propuesta: una parada de emergencia que funcione aunque la red falle.</li><li>Referencia: ISO 13850:2015, función de parada de emergencia en máquinas.</li><li>La independencia respecto de la red es propuesta de los ponentes, no norma.</li></ul><footer class='fuentes'><span class='fu'><span class='tag tS' title='secundaria'>S</span>ISO 13850:2015, vista en búsqueda; no se leyó la norma</span><span class='fu'><span class='tag tX' title='sin fuente / no se usa'>X</span>Independencia de la red: propuesta</span></footer></section><section class='d tipo-demo' data-notas='Repetir el guion completo (unos 105 s) y señalar en el registro cada evento según el diagrama.'><div class='kicker'>7 · Salvaguardas por capas</div><h2>Volvemos a la demo: cada salvaguarda en acción</h2><ul><li>Orden no firmada → rechazada (mando autenticado).</li><li>Interferencia y pérdida de mando → failsafe y retorno (canal y punto seguro).</li><li>Salida de zona → retorno automático (geovalla).</li><li>Parada de emergencia → aterrizan aunque no haya red.</li></ul><a class='boton' href='../demo/enjambre-local.html#guion' target='_blank' rel='noopener'>Abrir la demo ▸</a><footer class='fuentes'><span class='fu'>Simulación propia; propuestas de diseño de la charla</span></footer></section><section class='d tipo-seccion' data-notas=''><div class='num'>8</div><h1>Llamado a la acción</h1><p class='meta'>3 min · ambos</p></section><section class='d tipo-texto' data-notas='Los 14 días no cuentan desde el conocimiento de la vulnerabilidad, sino desde que existe la medida.'><div class='kicker'>8 · Llamado a la acción</div><h2>La UE ya obliga a notificar</h2><ul><li>Reglamento (UE) 2024/2847, art. 14: desde el 11-sep-2026.</li><li>Vulnerabilidades aprovechadas activamente: alerta temprana en 24 h y notificación en 72 h.</li><li>Informe final en 14 días desde que hay medida correctora o paliativa.</li><li>Aplicación general desde el 11-dic-2027 (art. 71.2).</li></ul><footer class='fuentes'><span class='fu'><span class='tag tP' title='primaria'>P</span>DOUE L de 20.11.2024 (copia del BOE, mismo sha256)</span><span class='fu'><span class='tag tP' title='primaria'>P</span>Comisión Europea, página de notificación</span></footer></section><section class='d tipo-roles' data-notas='Borrador: revisar entre los dos ponentes.'><div class='kicker'>8 · Llamado a la acción</div><h2>Qué puede hacer cada uno</h2><div class='roles'><div class='rol'><h3>Fabricante</h3><p>Sin contraseñas por defecto, puertos de depuración cerrados y plan de notificación de 24/72 h.</p></div><div class='rol'><h3>Integrador</h3><p>Nada de gestión expuesta: VPN o pasarela, geovalla y parada independiente desde el diseño.</p></div><div class='rol'><h3>Operador</h3><p>Inventario, medir la exposición y aislar lo que ya no tiene soporte.</p></div><div class='rol'><h3>Investigador</h3><p>Divulgación coordinada: publicar defensas, no cadenas de ataque.</p></div></div><footer class='fuentes'><span class='fu'>Propuesta de la charla, derivada del bloque 7</span></footer></section><section class='d tipo-cierre' data-notas='5 min de preguntas.'><h1>¿Preguntas?</h1><p class='sub'>Skynet puede esperar. Los equipos que nadie mantiene, no.</p><p class='autores'>Joseph Páez · José Laica</p></section>
+</div>
+<div id="barra"><div id="progreso"></div></div>
+<div id="num"></div>
+<div id="notas"></div>
+<div id="ayuda">← → avanzar · N notas · F pantalla completa</div>
+<script>
+const ds = [...document.querySelectorAll(".d")], N = ds.length;
+let i = 0;
+function ir(n) {
+  i = Math.max(0, Math.min(N - 1, n));
+  ds.forEach((d, k) => d.classList.toggle("activa", k === i));
+  document.getElementById("num").textContent = (i + 1) + " / " + N;
+  document.getElementById("progreso").style.width = ((i + 1) / N * 100) + "%";
+  document.getElementById("notas").textContent = ds[i].dataset.notas || "(Sin notas)";
+  history.replaceState(null, "", "#" + (i + 1));
+}
+function ajustar() { const k = Math.min(innerWidth / 1280, innerHeight / 720);
+  document.getElementById("escenario").style.transform = "translate(-50%,-50%) scale(" + k + ")"; }
+addEventListener("resize", ajustar);
+addEventListener("keydown", (e) => {
+  const k = e.key;
+  if (["ArrowRight", "PageDown", " ", "Enter"].includes(k)) { e.preventDefault(); ir(i + 1); }
+  else if (["ArrowLeft", "PageUp", "Backspace"].includes(k)) { e.preventDefault(); ir(i - 1); }
+  else if (k === "Home") ir(0); else if (k === "End") ir(N - 1);
+  else if (k === "n" || k === "N") document.getElementById("notas").classList.toggle("visible");
+  else if (k === "f" || k === "F") { if (!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); }
+});
+document.getElementById("escenario").addEventListener("click", (e) => { if (!e.target.closest("a")) ir(i + (e.clientX > innerWidth / 3 ? 1 : -1)); });
+addEventListener("hashchange", () => { const n = (parseInt(location.hash.slice(1)) || 1) - 1; if (n !== i) ir(n); });
+setTimeout(() => document.getElementById("ayuda").style.display = "none", 5000);
+ajustar(); ir((parseInt(location.hash.slice(1)) || 1) - 1);
+</script>
+</body>
+</html>
