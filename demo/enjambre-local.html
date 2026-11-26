@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<title>Enjambre con mando central y con mando local</title>
+<title>Enjambre: mando central, pérdida de mando y retorno seguro</title>
 <style>
   body { margin: 0; background: #04110D; color: #C8F5E1; font-family: DejaVu Sans, Arial, sans-serif; }
   header { padding: 10px 16px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
@@ -10,7 +10,9 @@
   button.activo { background: #1F7A62; }
   button.parada { border-color: #E63946; color: #FFB703; }
   button.parada.activo { background: #E63946; color: #04110D; }
-  #estado { margin-left: auto; font-family: DejaVu Sans Mono, monospace; font-size: 14px; }
+  #panel { margin-left: auto; font-family: DejaVu Sans Mono, monospace; font-size: 14px; line-height: 1.5; text-align: right; }
+  #aviso { color: #FFB703; }
+  #aviso.alerta { color: #E63946; font-weight: 700; }
   canvas { display: block; background: #071A14; cursor: crosshair; }
   footer { padding: 8px 16px; font-size: 12px; color: #8A93A3; }
 </style>
@@ -18,21 +20,26 @@
 <body>
 <header>
   <button id="b-central" class="activo">Mando central</button>
-  <button id="b-local">Pérdida de mando (solo reglas locales)</button>
+  <button id="b-local">Simular pérdida de mando</button>
+  <button id="b-restablecer">Restablecer mando</button>
   <button id="b-parada" class="parada">Parada de emergencia</button>
   <button id="b-reiniciar">Reiniciar</button>
-  <div id="estado"></div>
+  <div id="panel"></div>
 </header>
 <canvas id="c" width="900" height="520"></canvas>
 <footer>
   Simulación local. No se conecta a nada y no contiene ningún mecanismo de ataque.
-  En el modo central, haz clic en el mapa para indicar el punto de destino del operador.
-  La parada de emergencia es una propuesta de diseño, no una norma.
+  En el modo central, haz clic en el mapa para indicar el destino del operador.
+  Tras la pérdida de mando, el enjambre espera unos segundos y vuelve al punto seguro (cuadrado).
+  La parada de emergencia y el retorno seguro son propuestas de diseño, no normas.
 </footer>
 <script>
 const N = 40, W = 900, H = 520;
+const ESPERA_MS = 4000;                 // tiempo antes de activar el retorno seguro
+const SEGURO = { x: 70, y: 460 };       // punto seguro definido de antemano
 const cv = document.getElementById("c"), ctx = cv.getContext("2d");
 let drones = [], modo = "central", destino = null, parada = false;
+let enlace = true, tPerdida = 0;
 
 function iniciar() {
   drones = [];
@@ -43,6 +50,7 @@ function iniciar() {
 }
 
 function paso() {
+  const objetivo = modo === "central" ? destino : (modo === "seguro" ? SEGURO : null);
   for (const d of drones) {
     let ax = 0, ay = 0, n = 0, cx = 0, cy = 0, avx = 0, avy = 0, sx = 0, sy = 0;
     for (const o of drones) {
@@ -56,8 +64,10 @@ function paso() {
       ay += (cy / n - d.y) * 0.002 + (avy / n - d.vy) * 0.05;
     }
     ax += sx * 0.05; ay += sy * 0.05;
-    if (modo === "central" && destino) {
-      ax += (destino.x - d.x) * 0.0008; ay += (destino.y - d.y) * 0.0008;
+    if (objetivo) {
+      const dist = Math.hypot(objetivo.x - d.x, objetivo.y - d.y);
+      const k = modo === "seguro" && dist < 60 ? 0.0002 : 0.0008;   // frena al llegar al punto seguro
+      ax += (objetivo.x - d.x) * k; ay += (objetivo.y - d.y) * k;
     }
     if (d.x < 40) ax += 0.3; if (d.x > W - 40) ax -= 0.3;
     if (d.y < 40) ay += 0.3; if (d.y > H - 40) ay -= 0.3;
@@ -70,22 +80,34 @@ function paso() {
   }
 }
 
+// Coordinación: módulo de la media de las direcciones unitarias (0 a 1).
 function coordinacion() {
   let sx = 0, sy = 0;
-  for (const d of drones) {
-    const v = Math.hypot(d.vx, d.vy) || 1;
-    sx += d.vx / v; sy += d.vy / v;
-  }
+  for (const d of drones) { const v = Math.hypot(d.vx, d.vy) || 1; sx += d.vx / v; sy += d.vy / v; }
   return Math.hypot(sx, sy) / N;
+}
+
+// Desviados: drones cuya dirección se aparta más de 60 grados de la media del grupo.
+function desviados() {
+  let sx = 0, sy = 0;
+  for (const d of drones) { const v = Math.hypot(d.vx, d.vy) || 1; sx += d.vx / v; sy += d.vy / v; }
+  const m = Math.hypot(sx, sy) || 1, mx = sx / m, my = sy / m;
+  let c = 0;
+  for (const d of drones) { const v = Math.hypot(d.vx, d.vy) || 1; if ((d.vx / v) * mx + (d.vy / v) * my < 0.5) c++; }
+  return c;
 }
 
 function dibujar() {
   ctx.clearRect(0, 0, W, H);
-  if (destino && modo === "central") {
+  if (modo === "central" && destino) {
     ctx.strokeStyle = "#FFB703"; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.arc(destino.x, destino.y, 10, 0, Math.PI * 2); ctx.stroke();
   }
-  const color = parada ? "#8A93A3" : (modo === "central" ? "#3DDC97" : "#C8F5E1");
+  if (modo === "seguro" || modo === "local") {
+    ctx.strokeStyle = "#8A93A3"; ctx.lineWidth = 1.5;
+    ctx.strokeRect(SEGURO.x - 12, SEGURO.y - 12, 24, 24);
+  }
+  const color = parada ? "#8A93A3" : (modo === "central" ? "#3DDC97" : (modo === "seguro" ? "#FFB703" : "#C8F5E1"));
   for (const d of drones) {
     const ang = Math.atan2(d.vy, d.vx);
     ctx.save(); ctx.translate(d.x, d.y); ctx.rotate(ang);
@@ -94,30 +116,51 @@ function dibujar() {
     ctx.restore();
   }
   ctx.fillStyle = "#C8F5E1"; ctx.font = "14px DejaVu Sans Mono, monospace";
-  const etiqueta = modo === "central" ? "Modo: mando central" : "Modo: sin mando, solo reglas locales";
+  const etiqueta = { central: "Modo: mando central", local: "Modo: sin mando, esperando",
+                     seguro: "Modo: retorno a punto seguro" }[modo];
   ctx.fillText(etiqueta, 12, 22);
   if (parada) { ctx.fillStyle = "#E63946"; ctx.fillText("PARADA DE EMERGENCIA ACTIVA", 12, 42); }
-  document.getElementById("estado").textContent =
-    "Coordinación: " + Math.round(coordinacion() * 100) + " %";
 }
 
-function bucle() { paso(); dibujar(); requestAnimationFrame(bucle); }
-
-function marcar(id, activo) {
-  for (const b of ["b-central", "b-local"]) document.getElementById(b).classList.toggle("activo", b === id && activo);
+let texto = "", alerta = false;
+function actualizarPanel(ahora) {
+  const dev = desviados();
+  const anomalia = dev / N > 0.25 && modo !== "central";
+  let aviso = "Normal";
+  if (parada) aviso = "Parada de emergencia";
+  else if (modo === "local") aviso = "Enlace perdido: retorno en " + Math.max(0, Math.ceil((ESPERA_MS - (ahora - tPerdida)) / 1000)) + " s";
+  else if (modo === "seguro") aviso = "Retorno seguro en curso";
+  if (anomalia) aviso += " | ANOMALÍA: " + dev + " de " + N + " drones fuera de patrón";
+  document.getElementById("panel").innerHTML =
+    "Coordinación: " + Math.round(coordinacion() * 100) + " %<br>" +
+    "<span id='aviso' class='" + (anomalia ? "alerta" : "") + "'>" + aviso + "</span>";
 }
-document.getElementById("b-central").onclick = () => { modo = "central"; marcar("b-central", true); };
-document.getElementById("b-local").onclick = () => { modo = "local"; destino = null; marcar("b-local", true); };
+
+function bucle(ahora) {
+  if (!enlace && modo === "local" && ahora - tPerdida > ESPERA_MS) modo = "seguro";
+  paso(); dibujar(); actualizarPanel(ahora);
+  requestAnimationFrame(bucle);
+}
+
+function marcar(id) {
+  for (const b of ["b-central", "b-local"]) document.getElementById(b).classList.toggle("activo", b === id);
+}
+document.getElementById("b-central").onclick = () => { modo = "central"; enlace = true; marcar("b-central"); };
+document.getElementById("b-restablecer").onclick = () => { modo = "central"; enlace = true; parada = false; marcar("b-central");
+  document.getElementById("b-parada").classList.remove("activo"); };
+document.getElementById("b-local").onclick = () => { modo = "local"; enlace = false; destino = null; tPerdida = performance.now(); marcar("b-local"); };
 document.getElementById("b-parada").onclick = (e) => { parada = !parada; e.target.classList.toggle("activo", parada); };
-document.getElementById("b-reiniciar").onclick = () => { parada = false; document.getElementById("b-parada").classList.remove("activo"); iniciar(); };
+document.getElementById("b-reiniciar").onclick = () => { parada = false; enlace = true; modo = "central"; destino = null;
+  document.getElementById("b-parada").classList.remove("activo"); marcar("b-central"); iniciar(); };
 cv.addEventListener("click", (e) => {
   if (modo !== "central") return;
   const r = cv.getBoundingClientRect();
   destino = { x: (e.clientX - r.left) * (W / r.width), y: (e.clientY - r.top) * (H / r.height) };
 });
 
+if (location.hash === "#perdida") { modo = "local"; enlace = false; tPerdida = performance.now(); marcar("b-local"); }
 iniciar();
-bucle();
+requestAnimationFrame(bucle);
 </script>
 </body>
 </html>
