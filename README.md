@@ -17,7 +17,9 @@ Charla técnica de Joseph Páez (software y seguridad) y José Laica (electróni
 - `informes/charla-de-mirai-a-skynet-esquema-2026-11-25.md`: esquema, bloques, tabla de fuentes y pendientes.
 - `informes/charla-diapositivas-borrador-2026-11-25.md`: borrador por bloque. Cada diapositiva indica su fuente y su estado.
 - `evidencia/`: copias de las fuentes citadas. Las copias `-limpia` son las que se citan.
-- `assets/banner-mirai-skynet.svg`: portada animada.
+- `assets/banner-mirai-skynet.svg`: portada animada. Cada 20 segundos hay una escena de toma de control: el tinte cambia a rojo, aparece una unidad nueva y el texto pasa a «mando central perdido».
+- `demo/enjambre-local.html`: simulación local de un enjambre con mando central, pérdida de mando, retorno a punto seguro y panel de detección. No contiene ataque ni control de hardware.
+- `demo/cadena-de-control-defensas.svg`: diagrama de la cadena de control con los cuatro puntos de salvaguarda (autenticación del mando, canal cifrado, geovallado con punto seguro y parada de emergencia independiente de la red).
 
 ## Estado de las fuentes
 
